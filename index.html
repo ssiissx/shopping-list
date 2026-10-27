@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="쇼핑 리스트">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<title>쇼핑 리스트</title>
+<link rel="preload" href="fonts/list-sans.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* List Sans = Pretendard(SIL OFL)를 자주 쓰는 글자만 남겨 이름을 바꾼 글꼴. 없는 글자는 시스템 글꼴로 보인다. */
+@font-face{font-family:"List Sans";src:url("fonts/list-sans.woff2") format("woff2-variations"),url("fonts/list-sans.woff2") format("woff2");font-weight:45 920;font-style:normal;font-display:swap}
+/* Layout: iOS-style grouped list — large title header, one inset card per category, a cart card, purchase-history chips, and an add bar pinned to the bottom within thumb reach */
+:root{
+  --bg:#F2F2F7;
+  --card:#FFFFFF;
+  --ink:#111114;
+  --soft:#6C6C74;
+  --faint:#B4B4BA;
+  --sep:#E4E4E9;
+  --accent:#D9461E;
+  --accent-ink:#FFFFFF;
+  --accent-soft:#FBE8E1;
+  --danger:#D3243B;
+  --bar:rgba(242,242,247,.84);
+  --toast-bg:#1C1C1F;
+  --toast-ink:#F4F4F6;
+  --toast-act:#FF8F66;
+  --sans:"List Sans",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  --round:var(--sans);
+  --composer-h:68px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#000000;--card:#1C1C1E;--ink:#F3F3F5;--soft:#9C9CA4;--faint:#55555B;--sep:#2D2D31;
+    --accent:#FF7A4C;--accent-ink:#1E0C05;--accent-soft:#3A1C11;--danger:#FF6B7C;
+    --bar:rgba(10,10,12,.8);--toast-bg:#EDEDF0;--toast-ink:#111114;--toast-act:#C2401A;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.col{max-width:600px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+.top .col{padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;display:flex;align-items:flex-end;gap:12px}
+.heading{flex:1;min-width:0}
+h1{margin:0;font-family:var(--round);font-size:2rem;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.tally{margin:3px 0 0;color:var(--soft);font-size:.875rem;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:6px;padding-bottom:2px}
+.tool{height:34px;min-width:34px;padding:0 12px;border:0;border-radius:17px;background:var(--card);color:var(--accent);font-size:.9375rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.tool svg{width:18px;height:18px}
+.tool[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tool.icon{padding:0}
+
+main.col{padding-top:6px;padding-bottom:calc(var(--composer-h) + 40px + env(safe-area-inset-bottom,0px));display:grid;gap:22px}
+.notice{margin:0;padding:10px 14px;border-radius:12px;background:var(--card);color:var(--soft);font-size:.875rem}
+
+/* groups */
+#lists{display:grid;gap:22px}
+.ghead{margin:0 0 6px 16px;display:flex;align-items:baseline;gap:6px;color:var(--soft);font-size:.8125rem;font-weight:600;letter-spacing:.02em}
+.ghead .n{color:var(--faint);font-variant-numeric:tabular-nums}
+.card{list-style:none;margin:0;padding:0;border-radius:14px;background:var(--card);overflow:hidden}
+.row{display:flex;align-items:center}
+.row-main{flex:1;min-width:0;display:flex;align-items:stretch;gap:12px;padding:0 0 0 14px;border:0;background:none;text-align:left}
+.row-main:disabled{cursor:default}
+.tick{flex:none;align-self:center;width:24px;height:24px;border-radius:50%;border:1.75px solid var(--faint);display:grid;place-items:center;transition:background-color .15s,border-color .15s}
+.tick svg{width:14px;height:14px;opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s}
+.body{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:13px 14px 13px 0}
+.card > li + li .body{box-shadow:inset 0 1px var(--sep)}
+.card > li + li .edit{box-shadow:inset 0 1px var(--sep)}
+.name{flex:1;min-width:0;overflow-wrap:anywhere}
+.qty{flex:none;padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--soft);font-size:.8125rem;font-weight:600;font-variant-numeric:tabular-nums}
+.is-done .tick{background:var(--accent);border-color:var(--accent)}
+.is-done .tick svg{opacity:1;transform:none;color:var(--accent-ink)}
+.is-done .name{color:var(--soft);text-decoration:line-through;text-decoration-color:var(--faint)}
+.is-done .qty{opacity:.6}
+.edit{flex:none;align-self:stretch;display:flex;align-items:center;gap:6px;padding-right:12px}
+.catsel{height:32px;max-width:7.5rem;padding:0 8px;border:0;border-radius:8px;background:var(--bg);font-size:.8125rem}
+.minus{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:var(--danger);color:#FFFFFF;display:grid;place-items:center}
+.minus svg{width:14px;height:14px}
+
+/* cart */
+.cart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px}
+.cart-head h2{margin:0;font-family:var(--round);font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.cart-head .n{color:var(--soft);font-weight:600;font-variant-numeric:tabular-nums}
+.done-btn{height:34px;padding:0 14px;border:0;border-radius:17px;background:var(--accent);color:var(--accent-ink);font-size:.9375rem;font-weight:600}
+.done-btn:disabled{opacity:.5;cursor:default}
+
+/* history */
+.hist h2{margin:0 0 2px;font-family:var(--round);font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.hint{margin:0 0 10px;color:var(--soft);font-size:.8125rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:0;border-radius:18px;background:var(--card);font-size:.9375rem}
+.chip .n{color:var(--faint);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums}
+.chip.is-del{background:var(--accent-soft);color:var(--danger)}
+.chip.is-example{background:transparent;box-shadow:inset 0 0 0 1px var(--sep);color:var(--soft)}
+.chip:disabled{opacity:.5;cursor:default}
+.exlabel{margin:16px 0 8px;color:var(--soft);font-size:.8125rem;font-weight:600}
+
+.empty{padding:26px 0 6px}
+.empty p{margin:0;color:var(--soft);font-size:.9375rem;max-width:30em}
+.empty .empty-title{margin:0 0 4px;font-family:var(--round);font-size:1.25rem;font-weight:700;color:var(--ink)}
+
+/* composer */
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 -1px 0 var(--sep)}
+.composer form{display:flex;gap:8px;align-items:center;padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.composer input{flex:1;min-width:0;height:44px;padding:0 16px;border:0;border-radius:22px;background:var(--card);font-size:1rem;box-shadow:inset 0 0 0 1px var(--sep)}
+.composer input::placeholder{color:var(--faint)}
+.composer input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.add{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.add svg{width:20px;height:20px}
+.add:disabled,.composer input:disabled{opacity:.5}
+
+/* toast */
+.toastbar{position:fixed;left:0;right:0;bottom:calc(var(--composer-h) + 12px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;justify-content:center;pointer-events:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#toast{pointer-events:auto;width:100%;max-width:568px;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:14px;background:var(--toast-bg);color:var(--toast-ink);font-size:.9375rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.toast-act{margin-left:auto;padding:2px;border:0;background:none;color:var(--toast-act);font-weight:700}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="col">
+    <div class="heading">
+      <h1>쇼핑 리스트</h1>
+      <p class="tally" id="tally">&nbsp;</p>
+    </div>
+    <div class="tools">
+      <button id="shareBtn" class="tool icon" type="button" aria-label="목록 보내기" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg>
+      </button>
+      <button id="editBtn" class="tool" type="button" aria-pressed="false" hidden>편집</button>
+    </div>
+  </div>
+</header>
+
+<main class="col">
+  <p id="notice" class="notice" hidden></p>
+  <div id="lists" aria-label="살 것"></div>
+
+  <section id="cartSec" aria-labelledby="cartTitle" hidden>
+    <div class="cart-head">
+      <h2 id="cartTitle">담은 것 <span class="n" id="cartN"></span></h2>
+      <button id="doneBtn" class="done-btn" type="button">구매 완료</button>
+    </div>
+    <ul id="cartList" class="card"></ul>
+  </section>
+
+  <section id="histSec" class="hist" aria-labelledby="histTitle">
+    <h2 id="histTitle">구매 기록</h2>
+    <p id="histHint" class="hint"></p>
+    <div id="chips" class="chips"></div>
+    <div id="exWrap" hidden>
+      <p class="exlabel">자주 사는 것 예시</p>
+      <div id="exChips" class="chips"></div>
+    </div>
+  </section>
+</main>
+
+<div class="composer">
+  <form id="addForm" class="col" autocomplete="off">
+    <label for="addInput" class="sr">살 것 추가</label>
+    <input id="addInput" type="text" placeholder="살 것 추가 · 예: 우유 2, 건전지" enterkeyhint="done" maxlength="200">
+    <button id="addBtn" class="add" type="submit" aria-label="추가">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </form>
+</div>
+
+<div class="toastbar"><div id="toast" role="status" aria-live="polite" hidden></div></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // 분류와 그 분류로 묶을 단어들. 단어를 더하면 그 분류로 묶인다.
+  const CATS = [
+    ["produce","채소·과일","대파 쪽파 양파 마늘 감자 고구마 당근 오이 애호박 호박 배추 양배추 양상추 상추 깻잎 시금치 콩나물 숙주 버섯 팽이버섯 표고 새송이 느타리 브로콜리 파프리카 피망 고추 청양고추 토마토 방울토마토 부추 미나리 생강 사과 바나나 귤 오렌지 딸기 포도 샤인머스캣 수박 참외 복숭아 키위 블루베리 레몬 아보카도 샐러드 무 배 파"],
+    ["meat","정육·수산","고기 돼지고기 삼겹살 목살 앞다리 소고기 한우 불고기 차돌 닭고기 닭가슴살 닭다리 다짐육 베이컨 생선 고등어 연어 새우 오징어 조개 바지락 멸치 갈치 낙지 문어 전복 굴 닭"],
+    ["dairy","유제품·계란","우유 계란 달걀 요거트 요구르트 치즈 버터 생크림"],
+    ["chill","냉장·냉동","두부 순두부 어묵 햄 소시지 스팸 만두 김치 단무지 냉동 피자 너겟 돈까스 떡갈비"],
+    ["grain","쌀·면·빵","쌀 현미 잡곡 라면 국수 소면 칼국수 우동 파스타 스파게티 식빵 베이글 떡 시리얼 오트밀 밀가루 부침가루 튀김가루 즉석밥 햇반 빵"],
+    ["pantry","양념·가공식품","간장 된장 고추장 쌈장 소금 설탕 후추 식초 참기름 들기름 식용유 올리브유 마요네즈 케첩 굴소스 맛술 미림 물엿 올리고당 고춧가루 다시다 액젓 드레싱 소스 참치 통조림 카레 짜장 꿀 김"],
+    ["drink","음료·간식","생수 커피 원두 녹차 주스 탄산수 콜라 사이다 두유 맥주 소주 막걸리 와인 과자 초콜릿 아이스크림 젤리 견과 물 차"],
+    ["home","생활용품","휴지 화장지 키친타올 물티슈 세제 섬유유연제 주방세제 수세미 랩 지퍼백 위생백 쓰레기봉투 종량제 건전지 고무장갑 호일 수건 행주 방향제 전구 멀티탭 옷걸이 밀폐용기 청소포 락스 제습제"],
+    ["care","뷰티·위생","샴푸 린스 컨디셔너 트리트먼트 바디워시 바디로션 치약 칫솔 치실 비누 면도기 면도날 로션 스킨 토너 선크림 클렌징 폼클렌징 립밤 핸드크림 생리대 면봉 화장솜 마스크팩 렌즈 렌즈액 반창고 마스크 영양제 비타민 약"],
+    ["wear","옷·잡화","양말 속옷 티셔츠 셔츠 바지 청바지 운동화 신발 슬리퍼 모자 장갑 목도리 우산 가방 지갑 벨트 패딩 후드티 잠옷"],
+    ["tech","전자·디지털","충전기 케이블 이어폰 에어팟 보조배터리 마우스 키보드 usb sd카드 배터리 어댑터 hdmi 스피커 거치대 케이스 보호필름"],
+    ["study","문구·도서","볼펜 연필 샤프 샤프심 지우개 형광펜 노트 공책 포스트잇 수첩 클리어파일 스테이플러 테이프 가위 문제집 교재 잉크 토너카트리지 a4 펜 풀 책"],
+    ["etc","기타",""]
+  ];
+  const CAT_LABEL = Object.fromEntries(CATS.map(c => [c[0], c[1]]));
+  const KEYWORDS = [];
+  CATS.forEach(([k, , words]) => words.split(" ").filter(Boolean).forEach(w => KEYWORDS.push([w, k])));
+  const EXAMPLES = ["우유","계란","생수","휴지","세제","치약","샴푸","건전지"];
+  const STORE_KEY = "shopping-list-v1";
+
+  const $ = id => document.getElementById(id);
+  const tally = $("tally"), editBtn = $("editBtn"), shareBtn = $("shareBtn"), notice = $("notice");
+  const lists = $("lists"), cartSec = $("cartSec"), cartList = $("cartList"), cartN = $("cartN"), doneBtn = $("doneBtn");
+  const histHint = $("histHint"), chipsEl = $("chips"), exWrap = $("exWrap"), exChips = $("exChips");
+  const addForm = $("addForm"), addInput = $("addInput"), toastEl = $("toast");
+
+  const state = { items: [], editing: false };
+  const norm = s => String(s || "").replace(/\s+/g, "").toLowerCase();
+  const catOf = it => (CAT_LABEL[it.cat] ? it.cat : "etc");
+
+  // 한국어 복합어는 뒤쪽 말이 중심이라(사과주스는 주스) 가장 뒤에서 끝나는 단어를 고른다.
+  function guessCat(name){
+    const n = norm(name);
+    let best = "etc", bestEnd = -1, bestLen = 0;
+    for (const [w, k] of KEYWORDS){
+      let end = -1;
+      if (w.length === 1){ if (n === w) end = n.length; }
+      else { const i = n.lastIndexOf(w); if (i >= 0) end = i + w.length; }
+      if (end > bestEnd || (end >= 0 && end === bestEnd && w.length > bestLen)){ best = k; bestEnd = end; bestLen = w.length; }
+    }
+    return best;
+  }
+
+  // "두부 1모" -> {name:"두부", qty:"1모"}. 숫자 앞에 띄어쓰기가 있어야 수량으로 본다(비타500은 이름 그대로).
+  function parseEntry(raw){
+    const s = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 60);
+    if (!s) return null;
+    const m = s.match(/^(.+?)\s+(\d+(?:\.\d+)?\s?[^\s\d]{0,3})$/u);
+    return m ? { name: m[1], qty: m[2].replace(/\s+/g, "") } : { name: s, qty: "" };
+  }
+
+  function el(tag, attrs, ...kids){
+    const e = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)){
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k === "html") e.innerHTML = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids){ if (c != null && c !== false) e.append(c); }
+    return e;
+  }
+  const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>';
+  const ICON_MINUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>';
+
+  // ---- 저장 (이 기기의 브라우저에만) ----
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { map = {}; }
+  function persist(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(map)); }
+    catch (e) { showNotice("이 브라우저에서는 저장이 안 돼서, 창을 닫으면 목록이 사라져요."); }
+  }
+  function commit(){ persist(); state.items = Object.entries(map).map(([id, d]) => Object.assign({ id }, d)); render(); }
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const put = (id, data) => { map[id] = Object.assign({}, data); commit(); };
+  const patch = (id, p) => { if (map[id]){ map[id] = Object.assign({}, map[id], p); commit(); } };
+  const drop = id => { delete map[id]; commit(); };
+
+  // ---- 동작 ----
+  function addEntry(raw){
+    const e = parseEntry(raw);
+    if (!e) return;
+    const ex = state.items.find(i => norm(i.name) === norm(e.name));
+    if (ex){
+      const p = { need: true, checked: false };
+      if (e.qty) p.qty = e.qty;
+      patch(ex.id, p);
+    } else {
+      put(newId(), { name: e.name, qty: e.qty, cat: guessCat(e.name), need: true, checked: false, count: 0, lastBought: 0, addedAt: Date.now() });
+    }
+  }
+  const toggle = it => patch(it.id, { checked: !it.checked });
+  const relist = it => patch(it.id, { need: true, checked: false });
+  function unlist(it){
+    patch(it.id, { need: false, checked: false });
+    toast(`‘${it.name}’ 뺐어요`, "되돌리기", () => patch(it.id, { need: true, checked: !!it.checked }));
+  }
+  function purge(it){
+    const data = Object.assign({}, it); delete data.id;
+    drop(it.id);
+    toast(`‘${it.name}’ 기록을 지웠어요`, "되돌리기", () => put(it.id, data));
+  }
+  function finish(){
+    const done = state.items.filter(i => i.need && i.checked);
+    if (!done.length) return;
+    const before = done.map(i => ({ id: i.id, count: i.count || 0, lastBought: i.lastBought || 0 }));
+    const now = Date.now();
+    done.forEach(i => { map[i.id] = Object.assign({}, map[i.id], { need: false, checked: false, count: (i.count || 0) + 1, lastBought: now }); });
+    commit();
+    toast(`${done.length}개를 구매 기록으로 옮겼어요`, "되돌리기", () => {
+      before.forEach(b => { if (map[b.id]) map[b.id] = Object.assign({}, map[b.id], { need: true, checked: true, count: b.count, lastBought: b.lastBought }); });
+      commit();
+    });
+  }
+  async function share(){
+    const left = state.items.filter(i => i.need && !i.checked).sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
+    if (!left.length) return;
+    const text = "살 것\n" + left.map(i => "· " + i.name + (i.qty ? " " + i.qty : "")).join("\n");
+    if (navigator.share){
+      try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try { await navigator.clipboard.writeText(text); toast("목록을 복사했어요. 메신저에 붙여 넣으면 돼요."); }
+    catch (e) { toast("복사하지 못했어요."); }
+  }
+
+  // ---- 화면 ----
+  function showNotice(msg){ notice.textContent = msg; notice.hidden = false; }
+  let toastTimer = 0;
+  function hideToast(){ toastEl.hidden = true; }
+  function toast(msg, label, action){
+    toastEl.replaceChildren(el("span", { text: msg }),
+      label ? el("button", { class: "toast-act", type: "button", onclick: () => { hideToast(); action(); } }, label) : null);
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, label ? 6000 : 2600);
+  }
+
+  function row(it){
+    const main = el("button", { class: "row-main", type: "button", "aria-pressed": String(!!it.checked),
+      "aria-label": it.name + (it.qty ? " " + it.qty : ""), onclick: () => toggle(it) },
+      el("span", { class: "tick", html: ICON_CHECK }),
+      el("span", { class: "body" },
+        el("span", { class: "name", text: it.name }),
+        it.qty ? el("span", { class: "qty", text: it.qty }) : null));
+    const li = el("li", { class: "row" + (it.checked ? " is-done" : "") }, main);
+    if (state.editing){
+      const sel = el("select", { class: "catsel", id: "cat-" + it.id, "aria-label": it.name + " 분류",
+        onchange: e => patch(it.id, { cat: e.target.value }) });
+      CATS.forEach(([k, label]) => { const o = el("option", { value: k, text: label }); if (k === catOf(it)) o.selected = true; sel.append(o); });
+      li.append(el("span", { class: "edit" }, sel,
+        el("button", { class: "minus", type: "button", "aria-label": it.name + " 목록에서 빼기", html: ICON_MINUS, onclick: () => unlist(it) })));
+    }
+    return li;
+  }
+
+  function chip(it){
+    return el("button", { class: "chip" + (state.editing ? " is-del" : ""), type: "button",
+      "aria-label": it.name + (state.editing ? " 기록 지우기" : " 다시 추가"),
+      onclick: () => (state.editing ? purge(it) : relist(it)) },
+      el("span", { text: it.name }),
+      state.editing ? el("span", { "aria-hidden": "true", text: "×" })
+                    : (it.count > 1 ? el("span", { class: "n", text: "×" + it.count }) : null));
+  }
+
+  function render(){
+    const byAdded = (a, b) => (a.addedAt || 0) - (b.addedAt || 0);
+    const need = state.items.filter(i => i.need);
+    const left = need.filter(i => !i.checked);
+    const cart = need.filter(i => i.checked).sort(byAdded);
+    const hist = state.items.filter(i => !i.need)
+      .sort((a, b) => (b.count || 0) - (a.count || 0) || (b.lastBought || 0) - (a.lastBought || 0));
+
+    tally.textContent = need.length ? `${left.length}개 남음 · ${cart.length}개 담음` : "살 것을 적어 두세요";
+    editBtn.hidden = !state.items.length;
+    editBtn.textContent = state.editing ? "완료" : "편집";
+    editBtn.setAttribute("aria-pressed", String(state.editing));
+    shareBtn.hidden = !left.length;
+
+    const parts = [];
+    if (!left.length){
+      const first = !state.items.length;
+      parts.push(el("div", { class: "empty" },
+        el("p", { class: "empty-title", text: first ? "목록이 비어 있어요" : cart.length ? "다 담았어요" : "지금은 살 게 없어요" }),
+        el("p", { text: first
+          ? "아래 칸에 ‘우유 2, 건전지, 수건’처럼 쉼표로 여러 개를 한 번에 적을 수 있어요. 이름 뒤 숫자는 수량이 되고, 종류별로 알아서 묶여요."
+          : cart.length ? "계산까지 끝났으면 ‘구매 완료’를 눌러 정리하세요."
+          : "아래 칸에 적거나, 구매 기록에서 눌러 다시 추가하세요." })));
+    } else {
+      for (const [k, label] of CATS){
+        const rows = left.filter(i => catOf(i) === k).sort(byAdded);
+        if (!rows.length) continue;
+        parts.push(el("section", { class: "group" },
+          el("h2", { class: "ghead" }, label, el("span", { class: "n", text: String(rows.length) })),
+          el("ul", { class: "card" }, ...rows.map(row))));
+      }
+    }
+    lists.replaceChildren(...parts);
+
+    cartSec.hidden = !cart.length;
+    cartN.textContent = String(cart.length);
+    cartList.replaceChildren(...cart.map(row));
+
+    histHint.textContent = state.editing ? "누르면 기록에서 지워요"
+      : hist.length ? "누르면 목록에 다시 들어가요"
+      : "‘구매 완료’로 정리한 것이 여기 모여요. 다음엔 눌러서 바로 다시 추가할 수 있어요.";
+    chipsEl.replaceChildren(...hist.slice(0, 40).map(chip));
+    const have = new Set(state.items.map(i => norm(i.name)));
+    const ex = (!state.editing && hist.length < 8) ? EXAMPLES.filter(s => !have.has(norm(s))) : [];
+    exWrap.hidden = !ex.length;
+    exChips.replaceChildren(...ex.map(s => el("button", { class: "chip is-example", type: "button", "aria-label": s + " 추가", onclick: () => addEntry(s) }, s)));
+  }
+
+  addForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const parts = addInput.value.split(/[,，\n]/).map(s => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    parts.forEach(addEntry);
+    addInput.value = "";
+    addInput.focus();
+  });
+  editBtn.addEventListener("click", () => { state.editing = !state.editing; render(); });
+  shareBtn.addEventListener("click", share);
+  doneBtn.addEventListener("click", finish);
+
+  commit();
+
+  // 오프라인(마트 안처럼 신호가 약한 곳)에서도 열리게 한다. https 에서만 동작.
+  if ("serviceWorker" in navigator && location.protocol === "https:"){
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
