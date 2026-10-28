@@ -1,6 +1,6 @@
 // 인터넷이 약하거나 끊겨도 앱이 바로 열리게 한다.
 // 저장해 둔 것을 먼저 보여 주고(기다리지 않음), 뒤에서 새 버전을 받아 두었다가 다음에 열 때 쓴다.
-const CACHE = "shopping-list-v2";
+const CACHE = "shopping-list-v3";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png", "./fonts/list-sans.woff2"];
 
 self.addEventListener("install", e => {

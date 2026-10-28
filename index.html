@@ -86,7 +86,6 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 .c .dim{color:var(--soft);font-weight:500}
 .c[aria-pressed="true"],.c.on{background:var(--lime);color:var(--lime-ink)}
 .c[aria-pressed="true"] .n,.c.on .dim{color:rgba(18,22,10,.62)}
-.c input[type="date"]{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;-webkit-appearance:none;appearance:none}
 .stores .c{background:var(--card)}
 .stores .c[aria-pressed="true"]{background:var(--lime)}
 
@@ -171,7 +170,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 .f input{flex:1;min-width:0;height:40px;padding:0;border:0;background:none;font-size:1rem}
 .f input:focus{outline:none}
 .f input::placeholder{color:var(--faint)}
-.f input[type="date"]{color-scheme:dark}
+.datebtn{flex:1;min-width:0;height:40px;padding:0;border:0;background:none;text-align:left;font-size:1rem}
 .f .chips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}
 .f .go{margin-right:0}
 .won{color:var(--soft)}
@@ -186,6 +185,25 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 .btn-del{height:52px;padding:0 18px;border:0;border-radius:15px;background:var(--red-soft);color:var(--red);font-weight:720;display:inline-flex;align-items:center;gap:6px}
 .btn-del svg{width:18px;height:18px}
 @keyframes up{from{transform:translateY(100%)}}
+
+/* 날짜 고르기: 휴대폰 기본 달력은 키보드가 내려가며 칸이 움직이면 바로 닫혀 버려서, 앱 안의 달력을 쓴다 */
+.cal-wrap{position:fixed;inset:0;z-index:25}
+.cal{position:absolute;left:0;right:0;bottom:var(--kb);background:var(--sheet);border-radius:22px 22px 0 0;padding:8px 0 calc(14px + env(safe-area-inset-bottom,0px));animation:up .22s cubic-bezier(.2,.8,.2,1)}
+.kb-open .cal{padding-bottom:12px}
+.cal-head{display:flex;align-items:center;gap:6px;margin:2px 0 10px}
+.cal-title{flex:1;margin:0 0 0 4px;font-size:1.125rem;font-weight:780;letter-spacing:-.01em}
+.nav{width:40px;height:40px;border:0;border-radius:12px;background:var(--field);display:grid;place-items:center}
+.nav svg{width:20px;height:20px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wd{padding:2px 0 4px;color:var(--soft);font-size:.75rem;font-weight:650;text-align:center}
+.day{height:44px;border:0;border-radius:13px;background:none;font-size:1rem;font-weight:620;font-variant-numeric:tabular-nums}
+.sun{color:#FF9C9C}
+.day.is-today{color:var(--lime);box-shadow:inset 0 0 0 1.5px var(--lime)}
+.day[aria-pressed="true"]{background:var(--lime);color:var(--lime-ink);box-shadow:none}
+.day:disabled{opacity:1;color:#3E424A}
+.day[aria-pressed="true"]:disabled{background:#3A4422;color:var(--lime)}
+.cal-foot{display:flex;gap:8px;margin-top:12px}
+.cal-foot button{flex:1;height:46px;border:0;border-radius:14px;background:var(--field);font-weight:680}
 @keyframes fade{from{opacity:0}}
 
 /* purchase history page */
@@ -270,6 +288,10 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
   <div id="scrim" class="scrim"></div>
   <section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-label="고치기"></section>
 </div>
+<div id="calWrap" class="cal-wrap" hidden>
+  <div id="calScrim" class="scrim"></div>
+  <section id="cal" class="cal" role="dialog" aria-modal="true" aria-label="날짜 고르기"></section>
+</div>
 <datalist id="storeList"></datalist>
 
 <div class="toastbar"><div id="toast" role="status" aria-live="polite" hidden></div></div>
@@ -320,6 +342,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     cal: svg('<path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/>'),
     link: svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
     left: svg('<path d="m15 18-6-6 6-6"/>', 2.4),
+    right: svg('<path d="m9 18 6-6-6-6"/>', 2.4),
     bag: svg('<path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/>'),
     tag: svg('<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>')
   };
@@ -711,15 +734,56 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
   function dateChips(current, onPick, keep){
     const t = today(), tm = tomorrow();
     const custom = current && current !== t && current !== tm;
+    const hold = keep ? keepFocus : null;
     const mk = (label, value) => el("button", { class: "c", type: "button", "aria-pressed": String(current === value),
-      onpointerdown: keep ? keepFocus : null, onmousedown: keep ? keepFocus : null, onclick: () => onPick(value) }, label);
-    const picker = el("input", { type: "date", value: custom ? current : "", "aria-label": "날짜 고르기" });
-    picker.addEventListener("change", () => onPick(picker.value || ""));
-    // 휴대폰은 눌러도 달력이 뜨지만, 일부 브라우저는 직접 띄워야 한다.
-    picker.addEventListener("click", () => { if (typeof picker.showPicker === "function"){ try { picker.showPicker(); } catch (err) {} } });
+      onpointerdown: hold, onmousedown: hold, onclick: () => onPick(value) }, label);
     return [mk("언제든", ""), mk("오늘", t), mk("내일", tm),
-      el("label", { class: "c" + (custom ? " on" : "") }, icon(I.cal), custom ? `${mdk(current)} ${WD[fromKey(current).getDay()]}` : "날짜", picker)];
+      el("button", { class: "c" + (custom ? " on" : ""), type: "button", "aria-label": custom ? `날짜 ${mdk(current)}, 바꾸기` : "날짜 고르기",
+        onpointerdown: hold, onmousedown: hold, onclick: () => openCal({ value: current, min: t, onPick, hold }) },
+        icon(I.cal), custom ? `${mdk(current)} ${WD[fromKey(current).getDay()]}` : "날짜")];
   }
+
+  // ---- 앱 안 달력 ----
+  // 입력칸에서 열 때는 달력 버튼도 초점을 빼앗지 않아서 키보드가 그대로 있고, 고르면 바로 이어서 적을 수 있다.
+  const calWrap = $("calWrap"), cal = $("cal");
+  let calCtx = null;
+  function openCal(opts){
+    const base = opts.value ? fromKey(opts.value) : new Date();
+    calCtx = Object.assign({ y: base.getFullYear(), m: base.getMonth() }, opts);
+    drawCal();
+    calWrap.hidden = false;
+    history.pushState(Object.assign({}, history.state, { cal: 1 }), "");
+  }
+  function closeCal(fromPop){
+    if (calWrap.hidden) return;
+    calWrap.hidden = true;
+    cal.replaceChildren();
+    calCtx = null;
+    if (!fromPop && history.state && history.state.cal) history.back();
+  }
+  function drawCal(){
+    const { y, m, value, min, max, hold } = calCtx;
+    const t = today();
+    const btn = (attrs, ...kids) => el("button", Object.assign({ type: "button", onpointerdown: hold, onmousedown: hold }, attrs), ...kids);
+    const move = n => { const d = new Date(y, m + n, 1); calCtx.y = d.getFullYear(); calCtx.m = d.getMonth(); drawCal(); };
+    const cells = [];
+    for (let i = new Date(y, m, 1).getDay(); i > 0; i--) cells.push(el("span", { "aria-hidden": "true" }));
+    for (let d = 1, n = new Date(y, m + 1, 0).getDate(); d <= n; d++){
+      const day = new Date(y, m, d), k = dayKey(day);
+      cells.push(btn({ class: "day" + (k === t ? " is-today" : "") + (day.getDay() === 0 ? " sun" : ""),
+        "aria-pressed": String(k === value), "aria-label": `${m + 1}월 ${d}일 ${WD[day.getDay()]}요일${k === t ? ", 오늘" : ""}`,
+        disabled: (min && k < min) || (max && k > max),
+        onclick: () => { const fn = calCtx.onPick; closeCal(); fn(k); } }, String(d)));
+    }
+    cal.replaceChildren(el("div", { class: "grab" }), el("div", { class: "col" },
+      el("div", { class: "cal-head" },
+        el("h2", { class: "cal-title", text: `${y}년 ${m + 1}월` }),
+        btn({ class: "nav", "aria-label": "이전 달", html: I.left, disabled: min && dayKey(new Date(y, m, 0)) < min, onclick: () => move(-1) }),
+        btn({ class: "nav", "aria-label": "다음 달", html: I.right, disabled: max && dayKey(new Date(y, m + 1, 1)) > max, onclick: () => move(1) })),
+      el("div", { class: "cal-grid" }, ...[...WD].map((w, i) => el("span", { class: "wd" + (i === 0 ? " sun" : ""), text: w })), ...cells),
+      el("div", { class: "cal-foot" }, btn({ onclick: () => closeCal() }, "닫기"))));
+  }
+  $("calScrim").addEventListener("click", () => closeCal());
 
   function suggestions(q){
     if (URL_RE.test(q)) return [];
@@ -870,8 +934,13 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     openSheet(() => {
       const nameIn = el("input", { class: "sheet-name", type: "text", value: h.name, maxlength: "60", "aria-label": "이름", enterkeyhint: "done" });
       nameIn.addEventListener("input", () => { if (nameIn.value.trim()) upd({ name: nameIn.value.trim() }); });
-      const dateIn = el("input", { type: "date", value: dayKey(new Date(h.at)), max: today(), "aria-label": "산 날" });
-      dateIn.addEventListener("change", () => { if (dateIn.value){ const d = fromKey(dateIn.value); d.setHours(12); upd({ at: d.getTime() }); data.history.sort((a, b) => b.at - a.at); save(); } });
+      const boughtLabel = () => { const d = new Date(h.at); return `${d.getFullYear()}년 ${md(d)} ${WD[d.getDay()]}요일`; };
+      const dateIn = el("button", { class: "datebtn", type: "button", text: boughtLabel(),
+        onclick: () => openCal({ value: dayKey(new Date(h.at)), max: today(), onPick: k => {
+          const d = fromKey(k); d.setHours(12);
+          upd({ at: d.getTime() }); data.history.sort((a, b) => b.at - a.at); save();
+          dateIn.textContent = boughtLabel();
+        } }) });
       const storeIn = el("input", { type: "text", value: h.store, placeholder: "어디서 샀는지", list: "storeList", maxlength: "30", "aria-label": "어디서" });
       storeIn.addEventListener("input", () => upd({ store: storeIn.value.trim() }));
       const [linkIn, openA] = linkInput(h.link, L => { upd({ link: L }); if (L && !storeIn.value.trim()){ storeIn.value = storeFromUrl(L); upd({ store: storeIn.value }); } });
@@ -971,13 +1040,14 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
   // '뒤로'로 돌아간 기록에 시트·기록 화면 표시가 없으면 닫는다.
   window.addEventListener("popstate", e => {
     const s = e.state || {};
+    if (!s.cal && !calWrap.hidden) closeCal(true);
     if (!s.sheet && !sheetWrap.hidden) closeSheet(true);
     if (s.page !== "hist" && !histPage.hidden) closeHistory(true);
   });
-  if (history.state && (history.state.sheet || history.state.page)) history.replaceState(null, "");
+  if (history.state && (history.state.cal || history.state.sheet || history.state.page)) history.replaceState(null, "");
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
-    if (!sheetWrap.hidden) closeSheet(); else if (!histPage.hidden) closeHistory();
+    if (!calWrap.hidden) closeCal(); else if (!sheetWrap.hidden) closeSheet(); else if (!histPage.hidden) closeHistory();
   });
 
   // ---- 연결 ----
