@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="쇼핑 리스트">
-<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0E0F12">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-180.png">
@@ -17,171 +17,260 @@
 <style>
 /* List Sans = Pretendard(SIL OFL)를 자주 쓰는 글자만 남겨 이름을 바꾼 글꼴. 없는 글자는 시스템 글꼴로 보인다. */
 @font-face{font-family:"List Sans";src:url("fonts/list-sans.woff2") format("woff2-variations"),url("fonts/list-sans.woff2") format("woff2");font-weight:45 920;font-style:normal;font-display:swap}
-/* Layout: iOS-style grouped list — large title header, one inset card per category, a cart card, purchase-history chips, and an add bar pinned to the bottom within thumb reach */
+/* Layout: 어두운 한 화면 — 위에 개수 타일과 가게 칩, 가운데 날짜별 묶음(지난 것 → 오늘 → 언제든 → 다가올 날),
+   아래 엄지가 닿는 곳에 입력칸. 고치기는 아래에서 올라오는 시트, 구매 기록은 오른쪽에서 들어오는 화면. */
 :root{
-  --bg:#F2F2F7;
-  --card:#FFFFFF;
-  --ink:#111114;
-  --soft:#6C6C74;
-  --faint:#B4B4BA;
-  --sep:#E4E4E9;
-  --accent:#D9461E;
-  --accent-ink:#FFFFFF;
-  --accent-soft:#FBE8E1;
-  --danger:#D3243B;
-  --bar:rgba(242,242,247,.84);
-  --toast-bg:#1C1C1F;
-  --toast-ink:#F4F4F6;
-  --toast-act:#FF8F66;
+  --bg:#0E0F12;
+  --card:#17191E;
+  --field:#202329;
+  --sheet:#14161A;
+  --sep:#25282E;
+  --ink:#F2F3F5;
+  --ink-2:#C9CCD3;
+  --soft:#959AA5;
+  --faint:#5C616B;
+  --lime:#C8F25A;
+  --lime-ink:#12160A;
+  --lime-soft:#222A12;
+  --red:#FF7B7B;
+  --red-soft:#2C1618;
+  --red-fill:#E5484D;
+  --bar:rgba(14,15,18,.84);
   --sans:"List Sans",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
-  --round:var(--sans);
-  --composer-h:68px;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#000000;--card:#1C1C1E;--ink:#F3F3F5;--soft:#9C9CA4;--faint:#55555B;--sep:#2D2D31;
-    --accent:#FF7A4C;--accent-ink:#1E0C05;--accent-soft:#3A1C11;--danger:#FF6B7C;
-    --bar:rgba(10,10,12,.8);--toast-bg:#EDEDF0;--toast-ink:#111114;--toast-act:#C2401A;
-    color-scheme:dark;
-  }
+  --kb:0px;
+  --composer-h:76px;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;background:var(--bg)}
-body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent}
-button,input,select{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-user-select:none;user-select:none}
+button:disabled{opacity:.4;cursor:default}
+svg{display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.col{max-width:600px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
 /* header */
-.top{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
-.top .col{padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;display:flex;align-items:flex-end;gap:12px}
+.top{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px)}
+.top-in{padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:10px;display:flex;align-items:center;gap:12px}
 .heading{flex:1;min-width:0}
-h1{margin:0;font-family:var(--round);font-size:2rem;font-weight:800;letter-spacing:-.025em;line-height:1.1}
-.tally{margin:3px 0 0;color:var(--soft);font-size:.875rem;font-variant-numeric:tabular-nums}
-.tools{display:flex;gap:6px;padding-bottom:2px}
-.tool{height:34px;min-width:34px;padding:0 12px;border:0;border-radius:17px;background:var(--card);color:var(--accent);font-size:.9375rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
-.tool svg{width:18px;height:18px}
-.tool[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-.tool.icon{padding:0}
+h1{margin:0;font-size:1.875rem;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.tally{margin:3px 0 0;color:var(--soft);font-size:.8125rem;font-variant-numeric:tabular-nums}
+.pill-btn{flex:none;height:36px;padding:0 14px 0 11px;border:0;border-radius:18px;background:var(--field);display:inline-flex;align-items:center;gap:6px;font-size:.875rem;font-weight:650}
+.pill-btn svg{width:18px;height:18px;color:var(--lime)}
 
-main.col{padding-top:6px;padding-bottom:calc(var(--composer-h) + 40px + env(safe-area-inset-bottom,0px));display:grid;gap:22px}
-.notice{margin:0;padding:10px 14px;border-radius:12px;background:var(--card);color:var(--soft);font-size:.875rem}
+main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
+.notice{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:var(--red-soft);color:var(--red);font-size:.875rem}
 
-/* groups */
-#lists{display:grid;gap:22px}
-.ghead{margin:0 0 6px 16px;display:flex;align-items:baseline;gap:6px;color:var(--soft);font-size:.8125rem;font-weight:600;letter-spacing:.02em}
-.ghead .n{color:var(--faint);font-variant-numeric:tabular-nums}
-.card{list-style:none;margin:0;padding:0;border-radius:14px;background:var(--card);overflow:hidden}
-.row{display:flex;align-items:center}
-.row-main{flex:1;min-width:0;display:flex;align-items:stretch;gap:12px;padding:0 0 0 14px;border:0;background:none;text-align:left}
-.row-main:disabled{cursor:default}
-.tick{flex:none;align-self:center;width:24px;height:24px;border-radius:50%;border:1.75px solid var(--faint);display:grid;place-items:center;transition:background-color .15s,border-color .15s}
-.tick svg{width:14px;height:14px;opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s}
-.body{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:13px 14px 13px 0}
-.card > li + li .body{box-shadow:inset 0 1px var(--sep)}
-.card > li + li .edit{box-shadow:inset 0 1px var(--sep)}
-.name{flex:1;min-width:0;overflow-wrap:anywhere}
-.qty{flex:none;padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--soft);font-size:.8125rem;font-weight:600;font-variant-numeric:tabular-nums}
-.is-done .tick{background:var(--accent);border-color:var(--accent)}
-.is-done .tick svg{opacity:1;transform:none;color:var(--accent-ink)}
-.is-done .name{color:var(--soft);text-decoration:line-through;text-decoration-color:var(--faint)}
-.is-done .qty{opacity:.6}
-.edit{flex:none;align-self:stretch;display:flex;align-items:center;gap:6px;padding-right:12px}
-.catsel{height:32px;max-width:7.5rem;padding:0 8px;border:0;border-radius:8px;background:var(--bg);font-size:.8125rem}
-.minus{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:var(--danger);color:#FFFFFF;display:grid;place-items:center}
-.minus svg{width:14px;height:14px}
+/* count tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.tile{border:0;border-radius:14px;background:var(--card);padding:9px 10px 8px;text-align:left;display:flex;flex-direction:column;gap:1px}
+.tile .tl{font-size:.75rem;color:var(--soft);font-weight:650;white-space:nowrap}
+.tile .tn{font-size:1.375rem;font-weight:780;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile.is-zero .tn{color:var(--faint)}
+.tile.is-over{background:var(--red-soft)}
+.tile.is-over .tl,.tile.is-over .tn{color:var(--red)}
+.tile.is-today .tn{color:var(--lime)}
 
-/* cart */
-.cart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px}
-.cart-head h2{margin:0;font-family:var(--round);font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
-.cart-head .n{color:var(--soft);font-weight:600;font-variant-numeric:tabular-nums}
-.done-btn{height:34px;padding:0 14px;border:0;border-radius:17px;background:var(--accent);color:var(--accent-ink);font-size:.9375rem;font-weight:600}
-.done-btn:disabled{opacity:.5;cursor:default}
+/* store filter chips */
+.hscroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+.hscroll::-webkit-scrollbar{display:none}
+.stores{margin-bottom:16px}
+.c{flex:none;position:relative;height:32px;padding:0 12px;border:0;border-radius:16px;background:var(--field);color:var(--ink-2);font-size:.8125rem;font-weight:650;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.c svg{width:15px;height:15px;flex:none}
+.c .n{color:var(--faint);font-variant-numeric:tabular-nums}
+.c .dim{color:var(--soft);font-weight:500}
+.c[aria-pressed="true"],.c.on{background:var(--lime);color:var(--lime-ink)}
+.c[aria-pressed="true"] .n,.c.on .dim{color:rgba(18,22,10,.62)}
+.c input[type="date"]{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;-webkit-appearance:none;appearance:none}
+.stores .c{background:var(--card)}
+.stores .c[aria-pressed="true"]{background:var(--lime)}
 
-/* history */
-.hist h2{margin:0 0 2px;font-family:var(--round);font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
-.hint{margin:0 0 10px;color:var(--soft);font-size:.8125rem}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:0;border-radius:18px;background:var(--card);font-size:.9375rem}
-.chip .n{color:var(--faint);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums}
-.chip.is-del{background:var(--accent-soft);color:var(--danger)}
-.chip.is-example{background:transparent;box-shadow:inset 0 0 0 1px var(--sep);color:var(--soft)}
-.chip:disabled{opacity:.5;cursor:default}
-.exlabel{margin:16px 0 8px;color:var(--soft);font-size:.8125rem;font-weight:600}
+/* sections and rows */
+#lists{display:grid;gap:18px}
+.sec{scroll-margin-top:calc(86px + env(safe-area-inset-top,0px))}
+.row{scroll-margin-top:calc(96px + env(safe-area-inset-top,0px));scroll-margin-bottom:calc(var(--composer-h) + 12px)}
+.sec-h{display:flex;align-items:baseline;gap:8px;margin:0 4px 7px;font-size:.9375rem;font-weight:750}
+.sec-h .sub{color:var(--soft);font-weight:500;font-size:.8125rem}
+.sec-h .n{margin-left:auto;color:var(--faint);font-size:.8125rem;font-weight:600;font-variant-numeric:tabular-nums}
+.sec-over .sec-h{color:var(--red)}
+.sec-today .sec-h{color:var(--lime)}
+.card{list-style:none;margin:0;padding:0;border-radius:16px;background:var(--card);overflow:hidden}
+.row{position:relative;overflow:hidden}
+.row-fg{position:relative;display:flex;align-items:center;min-height:56px;background:var(--card);touch-action:pan-y}
+.row + .row .row-fg::before{content:"";position:absolute;left:52px;right:0;top:0;height:1px;background:var(--sep)}
+.tick{flex:none;width:52px;align-self:stretch;padding:0;border:0;background:none;display:grid;place-items:center}
+.tick i{width:24px;height:24px;border-radius:50%;border:2px solid var(--faint);display:grid;place-items:center;transition:background-color .15s,border-color .15s}
+.tick svg{width:15px;height:15px;color:var(--lime-ink);opacity:0;transform:scale(.5);transition:opacity .15s,transform .15s}
+.row.is-bought .tick i{background:var(--lime);border-color:var(--lime)}
+.row.is-bought .tick svg{opacity:1;transform:none}
+.row.is-bought .name{color:var(--soft);text-decoration:line-through}
+.rbody{flex:1;min-width:0;align-self:stretch;padding:10px 12px 10px 0;border:0;background:none;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.nline{display:flex;align-items:baseline;gap:7px;min-width:0}
+.name{min-width:0;font-weight:560;overflow-wrap:anywhere}
+.name.is-blank{color:var(--soft)}
+.qty{flex:none;color:var(--lime);font-size:.8125rem;font-weight:750;font-variant-numeric:tabular-nums}
+.meta{display:flex;flex-wrap:wrap;column-gap:6px;color:var(--soft);font-size:.8125rem}
+.meta span + span::before{content:"·";margin-right:6px;color:var(--faint)}
+.meta .warn{color:var(--red)}
+.go{flex:none;width:38px;height:38px;margin-right:10px;border-radius:11px;background:var(--lime-soft);color:var(--lime);display:grid;place-items:center}
+.go svg{width:17px;height:17px}
+.swipe-bg{position:absolute;inset:0;display:flex;align-items:center;padding:0 22px;font-size:.875rem;font-weight:750}
+.swipe-bg span{display:none;align-items:center;gap:6px}
+.swipe-bg svg{width:18px;height:18px}
+.row[data-dir="buy"] .swipe-bg{background:var(--lime-soft);color:var(--lime);justify-content:flex-start}
+.row[data-dir="del"] .swipe-bg{background:var(--red-soft);color:var(--red);justify-content:flex-end}
+.row[data-dir="buy"] .sb-buy,.row[data-dir="del"] .sb-del{display:inline-flex}
+.row[data-dir="buy"].is-armed .swipe-bg{background:var(--lime);color:var(--lime-ink)}
+.row[data-dir="del"].is-armed .swipe-bg{background:var(--red-fill);color:#FFFFFF}
+.row.is-new .row-fg{animation:flash 1.4s ease-out}
+@keyframes flash{from{background:#2E3A12}to{background:var(--card)}}
 
-.empty{padding:26px 0 6px}
-.empty p{margin:0;color:var(--soft);font-size:.9375rem;max-width:30em}
-.empty .empty-title{margin:0 0 4px;font-family:var(--round);font-size:1.25rem;font-weight:700;color:var(--ink)}
+/* empty */
+.empty{padding:34px 4px 8px;text-align:center}
+.empty .badge{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;background:var(--lime-soft);color:var(--lime);display:grid;place-items:center}
+.empty .badge svg{width:30px;height:30px}
+.empty h2{margin:0 0 6px;font-size:1.25rem;font-weight:780;letter-spacing:-.01em}
+.empty p{margin:0 auto;max-width:22em;color:var(--soft);font-size:.9375rem}
+.tips{list-style:none;margin:20px auto 0;padding:0;max-width:21em;display:grid;gap:8px;text-align:left}
+.tips li{display:flex;gap:10px;padding:11px 13px;border-radius:13px;background:var(--card);color:var(--ink-2);font-size:.875rem}
+.tips svg{flex:none;width:17px;height:17px;margin-top:1px;color:var(--lime)}
 
 /* composer */
-.composer{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 -1px 0 var(--sep)}
-.composer form{display:flex;gap:8px;align-items:center;padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-.composer input{flex:1;min-width:0;height:44px;padding:0 16px;border:0;border-radius:22px;background:var(--card);font-size:1rem;box-shadow:inset 0 0 0 1px var(--sep)}
-.composer input::placeholder{color:var(--faint)}
-.composer input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
-.add{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
-.add svg{width:20px;height:20px}
-.add:disabled,.composer input:disabled{opacity:.5}
+.composer{position:fixed;left:0;right:0;bottom:var(--kb);z-index:6;background:var(--bar);-webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);border-top:1px solid var(--sep)}
+.composer .col{padding-top:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.kb-open .composer .col{padding-bottom:8px}
+.composer .hscroll{margin-bottom:8px}
+.sug .c svg{color:var(--soft)}
+.add-row{display:flex;gap:8px;align-items:center}
+.add-row input{flex:1;min-width:0;height:46px;padding:0 16px;border:0;border-radius:23px;background:var(--field);font-size:1rem}
+.add-row input::placeholder{color:var(--faint)}
+.add-row input:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--lime)}
+.add{flex:none;width:46px;height:46px;border:0;border-radius:50%;background:var(--lime);color:var(--lime-ink);display:grid;place-items:center}
+.add svg{width:22px;height:22px}
+
+/* bottom sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:20}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);animation:fade .2s}
+.sheet{position:absolute;left:0;right:0;bottom:var(--kb);max-height:calc(100% - var(--kb) - 28px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;background:var(--sheet);border-radius:22px 22px 0 0;padding:8px 0 calc(16px + env(safe-area-inset-bottom,0px));animation:up .26s cubic-bezier(.2,.8,.2,1)}
+.grab{width:38px;height:5px;margin:0 auto 6px;border-radius:3px;background:var(--faint)}
+.sheet-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sheet-name{flex:1;min-width:0;height:48px;padding:0;border:0;background:none;font-size:1.375rem;font-weight:780;letter-spacing:-.02em}
+.sheet-name:focus{outline:none}
+.sheet-name::placeholder{color:var(--faint)}
+.x{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--field);color:var(--soft);display:grid;place-items:center}
+.x svg{width:18px;height:18px}
+.group{margin-bottom:10px;border-radius:16px;background:var(--card)}
+.f{display:flex;align-items:center;gap:12px;min-height:54px;padding:7px 12px 7px 14px}
+.f + .f{border-top:1px solid var(--sep)}
+.fl{flex:none;width:50px;color:var(--soft);font-size:.875rem;font-weight:650}
+.f input{flex:1;min-width:0;height:40px;padding:0;border:0;background:none;font-size:1rem}
+.f input:focus{outline:none}
+.f input::placeholder{color:var(--faint)}
+.f input[type="date"]{color-scheme:dark}
+.f .chips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}
+.f .go{margin-right:0}
+.won{color:var(--soft)}
+.stepper{margin-left:auto;display:flex;align-items:center;gap:4px}
+.stepper button{width:38px;height:38px;border:0;border-radius:12px;background:var(--field);display:grid;place-items:center}
+.stepper svg{width:18px;height:18px}
+.stepper output{min-width:52px;text-align:center;font-size:1.0625rem;font-weight:750;font-variant-numeric:tabular-nums}
+.last{margin:0 4px 12px;color:var(--soft);font-size:.8125rem}
+.actions{display:grid;grid-template-columns:1fr auto;gap:8px}
+.btn-main{height:52px;border:0;border-radius:15px;background:var(--lime);color:var(--lime-ink);font-size:1rem;font-weight:780;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-main svg{width:20px;height:20px}
+.btn-del{height:52px;padding:0 18px;border:0;border-radius:15px;background:var(--red-soft);color:var(--red);font-weight:720;display:inline-flex;align-items:center;gap:6px}
+.btn-del svg{width:18px;height:18px}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes fade{from{opacity:0}}
+
+/* purchase history page */
+.page{position:fixed;inset:0;z-index:10;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);animation:slidein .26s cubic-bezier(.2,.8,.2,1)}
+@keyframes slidein{from{transform:translateX(100%)}}
+.back{height:36px;padding:0 8px 0 0;border:0;background:none;color:var(--lime);display:inline-flex;align-items:center;gap:2px;font-size:1rem;font-weight:650}
+.back svg{width:24px;height:24px}
+.page-body{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+.page-body h1{margin:2px 0 14px}
+.search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;margin-bottom:14px;border-radius:13px;background:var(--field)}
+.search svg{width:18px;height:18px;color:var(--faint)}
+.search input{flex:1;min-width:0;height:42px;border:0;background:none;font-size:1rem}
+.search input:focus{outline:none}
+.search input::placeholder{color:var(--faint)}
+.sumcard{margin-bottom:16px;padding:13px 15px;border-radius:16px;background:var(--lime-soft)}
+.sumcard b{display:block;color:var(--lime);font-size:1.0625rem;font-weight:780}
+.sumcard p{margin:3px 0 0;color:#D6EE9C;font-size:.875rem}
+#histList{display:grid;gap:18px}
+.hrow{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 10px 0 14px}
+.hrow + .hrow{border-top:1px solid var(--sep)}
+.hmain{flex:1;min-width:0;align-self:stretch;padding:9px 0;border:0;background:none;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.again{flex:none;height:32px;padding:0 12px;border:0;border-radius:16px;background:var(--lime-soft);color:var(--lime);font-size:.8125rem;font-weight:720}
+.again.is-in{background:var(--field);color:var(--soft)}
+.page .empty{padding-top:40px}
 
 /* toast */
-.toastbar{position:fixed;left:0;right:0;bottom:calc(var(--composer-h) + 12px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;justify-content:center;pointer-events:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-#toast{pointer-events:auto;width:100%;max-width:568px;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:14px;background:var(--toast-bg);color:var(--toast-ink);font-size:.9375rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-.toast-act{margin-left:auto;padding:2px;border:0;background:none;color:var(--toast-act);font-weight:700}
+.toastbar{position:fixed;left:0;right:0;bottom:calc(var(--kb) + var(--composer-h) + 10px);z-index:30;display:flex;justify-content:center;pointer-events:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.on-page .toastbar,.on-sheet .toastbar{bottom:calc(var(--kb) + 16px + env(safe-area-inset-bottom,0px))}
+#toast{pointer-events:auto;width:100%;max-width:528px;display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:14px;background:#ECEEF1;color:#111214;font-size:.9375rem;font-weight:560;box-shadow:0 12px 32px rgba(0,0,0,.5);animation:fade .18s}
+.toast-act{margin-left:auto;padding:2px;border:0;background:none;color:#3F5C00;font-weight:800;white-space:nowrap}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <header class="top">
-  <div class="col">
+  <div class="col top-in">
     <div class="heading">
-      <h1>쇼핑 리스트</h1>
+      <h1>살 것</h1>
       <p class="tally" id="tally">&nbsp;</p>
     </div>
-    <div class="tools">
-      <button id="shareBtn" class="tool icon" type="button" aria-label="목록 보내기" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg>
-      </button>
-      <button id="editBtn" class="tool" type="button" aria-pressed="false" hidden>편집</button>
-    </div>
+    <button id="histBtn" class="pill-btn" type="button" aria-label="구매 기록 보기"></button>
   </div>
 </header>
 
 <main class="col">
   <p id="notice" class="notice" hidden></p>
+  <div id="tiles" class="tiles" hidden></div>
+  <div id="stores" class="stores hscroll" role="group" aria-label="가게별 보기" hidden></div>
   <div id="lists" aria-label="살 것"></div>
-
-  <section id="cartSec" aria-labelledby="cartTitle" hidden>
-    <div class="cart-head">
-      <h2 id="cartTitle">담은 것 <span class="n" id="cartN"></span></h2>
-      <button id="doneBtn" class="done-btn" type="button">구매 완료</button>
-    </div>
-    <ul id="cartList" class="card"></ul>
-  </section>
-
-  <section id="histSec" class="hist" aria-labelledby="histTitle">
-    <h2 id="histTitle">구매 기록</h2>
-    <p id="histHint" class="hint"></p>
-    <div id="chips" class="chips"></div>
-    <div id="exWrap" hidden>
-      <p class="exlabel">자주 사는 것 예시</p>
-      <div id="exChips" class="chips"></div>
-    </div>
-  </section>
 </main>
 
-<div class="composer">
-  <form id="addForm" class="col" autocomplete="off">
-    <label for="addInput" class="sr">살 것 추가</label>
-    <input id="addInput" type="text" placeholder="살 것 추가 · 예: 우유 2, 건전지" enterkeyhint="done" maxlength="200">
-    <button id="addBtn" class="add" type="submit" aria-label="추가">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
-  </form>
+<div id="composer" class="composer">
+  <div class="col">
+    <div id="sug" class="sug hscroll" aria-label="전에 산 것" hidden></div>
+    <div id="when" class="hscroll" role="group" aria-label="언제 살지" hidden></div>
+    <form id="addForm" class="add-row" autocomplete="off">
+      <label for="addInput" class="sr">살 것 추가</label>
+      <input id="addInput" type="text" enterkeyhint="done" maxlength="600" autocomplete="off">
+      <button id="addBtn" class="add" type="submit" aria-label="추가"></button>
+    </form>
+  </div>
 </div>
+
+<section id="histPage" class="page" aria-labelledby="histTitle" hidden>
+  <header class="top">
+    <div class="col top-in">
+      <button id="histBack" class="back" type="button"></button>
+    </div>
+  </header>
+  <div class="col page-body">
+    <h1 id="histTitle">구매 기록</h1>
+    <label class="search"><span id="searchIcon"></span><span class="sr">구매 기록에서 찾기</span>
+      <input id="histQ" type="search" placeholder="이름이나 가게로 찾기" enterkeyhint="search" autocomplete="off">
+    </label>
+    <div id="histSum"></div>
+    <div id="histList"></div>
+  </div>
+</section>
+
+<div id="sheetWrap" class="sheet-wrap" hidden>
+  <div id="scrim" class="scrim"></div>
+  <section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-label="고치기"></section>
+</div>
+<datalist id="storeList"></datalist>
 
 <div class="toastbar"><div id="toast" role="status" aria-live="polite" hidden></div></div>
 
@@ -189,58 +278,51 @@ main.col{padding-top:6px;padding-bottom:calc(var(--composer-h) + 40px + env(safe
 (function(){
   "use strict";
 
-  // 분류와 그 분류로 묶을 단어들. 단어를 더하면 그 분류로 묶인다.
-  const CATS = [
-    ["produce","채소·과일","대파 쪽파 양파 마늘 감자 고구마 당근 오이 애호박 호박 배추 양배추 양상추 상추 깻잎 시금치 콩나물 숙주 버섯 팽이버섯 표고 새송이 느타리 브로콜리 파프리카 피망 고추 청양고추 토마토 방울토마토 부추 미나리 생강 사과 바나나 귤 오렌지 딸기 포도 샤인머스캣 수박 참외 복숭아 키위 블루베리 레몬 아보카도 샐러드 무 배 파"],
-    ["meat","정육·수산","고기 돼지고기 삼겹살 목살 앞다리 소고기 한우 불고기 차돌 닭고기 닭가슴살 닭다리 다짐육 베이컨 생선 고등어 연어 새우 오징어 조개 바지락 멸치 갈치 낙지 문어 전복 굴 닭"],
-    ["dairy","유제품·계란","우유 계란 달걀 요거트 요구르트 치즈 버터 생크림"],
-    ["chill","냉장·냉동","두부 순두부 어묵 햄 소시지 스팸 만두 김치 단무지 냉동 피자 너겟 돈까스 떡갈비"],
-    ["grain","쌀·면·빵","쌀 현미 잡곡 라면 국수 소면 칼국수 우동 파스타 스파게티 식빵 베이글 떡 시리얼 오트밀 밀가루 부침가루 튀김가루 즉석밥 햇반 빵"],
-    ["pantry","양념·가공식품","간장 된장 고추장 쌈장 소금 설탕 후추 식초 참기름 들기름 식용유 올리브유 마요네즈 케첩 굴소스 맛술 미림 물엿 올리고당 고춧가루 다시다 액젓 드레싱 소스 참치 통조림 카레 짜장 꿀 김"],
-    ["drink","음료·간식","생수 커피 원두 녹차 주스 탄산수 콜라 사이다 두유 맥주 소주 막걸리 와인 과자 초콜릿 아이스크림 젤리 견과 물 차"],
-    ["home","생활용품","휴지 화장지 키친타올 물티슈 세제 섬유유연제 주방세제 수세미 랩 지퍼백 위생백 쓰레기봉투 종량제 건전지 고무장갑 호일 수건 행주 방향제 전구 멀티탭 옷걸이 밀폐용기 청소포 락스 제습제"],
-    ["care","뷰티·위생","샴푸 린스 컨디셔너 트리트먼트 바디워시 바디로션 치약 칫솔 치실 비누 면도기 면도날 로션 스킨 토너 선크림 클렌징 폼클렌징 립밤 핸드크림 생리대 면봉 화장솜 마스크팩 렌즈 렌즈액 반창고 마스크 영양제 비타민 약"],
-    ["wear","옷·잡화","양말 속옷 티셔츠 셔츠 바지 청바지 운동화 신발 슬리퍼 모자 장갑 목도리 우산 가방 지갑 벨트 패딩 후드티 잠옷"],
-    ["tech","전자·디지털","충전기 케이블 이어폰 에어팟 보조배터리 마우스 키보드 usb sd카드 배터리 어댑터 hdmi 스피커 거치대 케이스 보호필름"],
-    ["study","문구·도서","볼펜 연필 샤프 샤프심 지우개 형광펜 노트 공책 포스트잇 수첩 클리어파일 스테이플러 테이프 가위 문제집 교재 잉크 토너카트리지 a4 펜 풀 책"],
-    ["etc","기타",""]
+  const STORE_KEY = "shopping-list-v2";
+  const OLD_KEY = "shopping-list-v1";   // 첫 버전 저장본. 처음 열 때 한 번 옮겨 오고 지우지는 않는다.
+  const HIST_MAX = 1500;
+
+  // 링크 주소 → 가게 이름. 위에서부터 맞춰 보므로 더 구체적인 주소를 앞에 둔다. 끝이 "."이면 그 글자가 들어 있기만 하면 된다.
+  const SHOPS = [
+    ["coupang.com","쿠팡"],["coupa.ng","쿠팡"],
+    ["smartstore.naver.com","네이버"],["brand.naver.com","네이버"],["shopping.naver.com","네이버"],["naver.me","네이버"],["naver.com","네이버"],
+    ["emart.ssg.com","이마트몰"],["ssg.com","SSG"],["musinsa.com","무신사"],["11st.co.kr","11번가"],["gmarket.co.kr","G마켓"],["auction.co.kr","옥션"],
+    ["oliveyoung.co.kr","올리브영"],["daisomall.co.kr","다이소"],["daiso.co.kr","다이소"],["kurly.com","컬리"],["29cm.co.kr","29CM"],
+    ["zigzag.kr","지그재그"],["a-bly.com","에이블리"],["aliexpress.","알리"],["temu.com","테무"],["lotteon.com","롯데ON"],["homeplus.co.kr","홈플러스"],
+    ["gift.kakao.com","카카오 선물하기"],["ohou.se","오늘의집"],["idus.com","아이디어스"],["yes24.com","YES24"],["kyobobook.co.kr","교보문고"],
+    ["aladin.co.kr","알라딘"],["danawa.com","다나와"],["interpark.com","인터파크"],["apple.com","애플"],["samsung.com","삼성닷컴"],
+    ["ikea.com","이케아"],["costco.co.kr","코스트코"],["uniqlo.com","유니클로"],["hmall.com","현대H몰"],["amazon.","아마존"]
   ];
-  const CAT_LABEL = Object.fromEntries(CATS.map(c => [c[0], c[1]]));
-  const KEYWORDS = [];
-  CATS.forEach(([k, , words]) => words.split(" ").filter(Boolean).forEach(w => KEYWORDS.push([w, k])));
-  const EXAMPLES = ["우유","계란","생수","휴지","세제","치약","샴푸","건전지"];
-  const STORE_KEY = "shopping-list-v1";
+  // "계란 30구"처럼 숫자 뒤에 붙으면 수량으로 보는 말. 2L·500g 같은 용량은 이름에 그대로 둔다.
+  const COUNT_UNITS = "개 구 팩 병 캔 봉 봉지 박스 통 롤 장 켤레 모 단 묶음 줄 판 망 송이 마리 포 세트 권 자루 알 정 매 개입".split(" ");
+  const URL_RE = /https?:\/\/[^\s<>"']+/i;
+  const WD = "일월화수목금토";
 
   const $ = id => document.getElementById(id);
-  const tally = $("tally"), editBtn = $("editBtn"), shareBtn = $("shareBtn"), notice = $("notice");
-  const lists = $("lists"), cartSec = $("cartSec"), cartList = $("cartList"), cartN = $("cartN"), doneBtn = $("doneBtn");
-  const histHint = $("histHint"), chipsEl = $("chips"), exWrap = $("exWrap"), exChips = $("exChips");
-  const addForm = $("addForm"), addInput = $("addInput"), toastEl = $("toast");
+  const tally = $("tally"), notice = $("notice"), tilesEl = $("tiles"), storesEl = $("stores"), lists = $("lists");
+  const composer = $("composer"), sugEl = $("sug"), whenEl = $("when"), addForm = $("addForm"), addInput = $("addInput");
+  const histPage = $("histPage"), histQ = $("histQ"), histSum = $("histSum"), histList = $("histList");
+  const sheetWrap = $("sheetWrap"), sheet = $("sheet"), storeList = $("storeList"), toastEl = $("toast");
+  const root = document.documentElement;
+  const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const state = { items: [], editing: false };
-  const norm = s => String(s || "").replace(/\s+/g, "").toLowerCase();
-  const catOf = it => (CAT_LABEL[it.cat] ? it.cat : "etc");
-
-  // 한국어 복합어는 뒤쪽 말이 중심이라(사과주스는 주스) 가장 뒤에서 끝나는 단어를 고른다.
-  function guessCat(name){
-    const n = norm(name);
-    let best = "etc", bestEnd = -1, bestLen = 0;
-    for (const [w, k] of KEYWORDS){
-      let end = -1;
-      if (w.length === 1){ if (n === w) end = n.length; }
-      else { const i = n.lastIndexOf(w); if (i >= 0) end = i + w.length; }
-      if (end > bestEnd || (end >= 0 && end === bestEnd && w.length > bestLen)){ best = k; bestEnd = end; bestLen = w.length; }
-    }
-    return best;
-  }
-
-  // "두부 1모" -> {name:"두부", qty:"1모"}. 숫자 앞에 띄어쓰기가 있어야 수량으로 본다(비타500은 이름 그대로).
-  function parseEntry(raw){
-    const s = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 60);
-    if (!s) return null;
-    const m = s.match(/^(.+?)\s+(\d+(?:\.\d+)?\s?[^\s\d]{0,3})$/u);
-    return m ? { name: m[1], qty: m[2].replace(/\s+/g, "") } : { name: s, qty: "" };
-  }
+  // ---- 아이콘 (Lucide, ISC 라이선스) ----
+  const svg = (p, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w || 2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const I = {
+    check: svg('<path d="M20 6 9 17l-5-5"/>', 3.2),
+    trash: svg('<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'),
+    ext: svg('<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'),
+    history: svg('<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>'),
+    plus: svg('<path d="M5 12h14"/><path d="M12 5v14"/>', 2.6),
+    minus: svg('<path d="M5 12h14"/>', 2.6),
+    x: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', 2.4),
+    search: svg('<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>'),
+    cal: svg('<path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/>'),
+    link: svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+    left: svg('<path d="m15 18-6-6 6-6"/>', 2.4),
+    bag: svg('<path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/>'),
+    tag: svg('<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>')
+  };
 
   function el(tag, attrs, ...kids){
     const e = document.createElement(tag);
@@ -255,172 +337,707 @@ main.col{padding-top:6px;padding-bottom:calc(var(--composer-h) + 40px + env(safe
     for (const c of kids){ if (c != null && c !== false) e.append(c); }
     return e;
   }
-  const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>';
-  const ICON_MINUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>';
+  const icon = html => el("span", { html, "aria-hidden": "true", style: "display:contents" });
 
-  // ---- 저장 (이 기기의 브라우저에만) ----
-  let map = {};
-  try { map = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { map = {}; }
-  function persist(){
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(map)); }
-    catch (e) { showNotice("이 브라우저에서는 저장이 안 돼서, 창을 닫으면 목록이 사라져요."); }
-  }
-  function commit(){ persist(); state.items = Object.entries(map).map(([id, d]) => Object.assign({ id }, d)); render(); }
+  // ---- 날짜·글자 ----
+  const pad = n => String(n).padStart(2, "0");
+  const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const fromKey = k => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const md = d => `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const mdk = k => md(fromKey(k));
+  const won = n => Number(n).toLocaleString("ko-KR") + "원";
+  const norm = s => String(s || "").replace(/\s+/g, "").toLowerCase();
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  const put = (id, data) => { map[id] = Object.assign({}, data); commit(); };
-  const patch = (id, p) => { if (map[id]){ map[id] = Object.assign({}, map[id], p); commit(); } };
-  const drop = id => { delete map[id]; commit(); };
+  const qtyText = it => it.unit ? `${it.qty}${it.unit}` : (it.qty > 1 ? `×${it.qty}` : "");
+  const today = () => dayKey(new Date());
+  const tomorrow = () => dayKey(addDays(new Date(), 1));
+  function dateWord(k){
+    if (!k) return "언제든";
+    if (k === today()) return "오늘";
+    if (k === tomorrow()) return "내일";
+    return mdk(k);
+  }
+
+  // "우유 2" "계란 30구" "휴지 ×3" → 이름·수량. 숫자 앞에 띄어쓰기가 있어야 수량으로 본다(비타500은 이름 그대로).
+  function parseEntry(raw){
+    const s = String(raw || "").trim().replace(/\s+/g, " ");
+    if (!s) return null;
+    let m = s.match(/^(.+?)(?:\s+[xX]|\s*[×*])\s*(\d{1,4})$/);
+    if (m) return { name: m[1].slice(0, 60), qty: clampQty(+m[2]), unit: "" };
+    m = s.match(/^(.+?)\s+(\d{1,4})\s?([^\s\d]{0,3})$/u);
+    if (m && (!m[3] || COUNT_UNITS.includes(m[3]))){
+      return { name: m[1].slice(0, 60), qty: clampQty(+m[2]), unit: m[3] === "개" ? "" : (m[3] || "") };
+    }
+    return { name: s.slice(0, 60), qty: null, unit: "" };
+  }
+  const clampQty = n => Math.max(1, Math.min(9999, Math.round(n) || 1));
+  function qtyFromOld(q){
+    const m = String(q || "").match(/^(\d+(?:\.\d+)?)(.*)$/);
+    if (!m) return { qty: 1, unit: "" };
+    const unit = m[2].trim();
+    return { qty: clampQty(+m[1]), unit: unit === "개" ? "" : unit };
+  }
+
+  // 주소처럼 생긴 글 → 열 수 있는 https 주소. 글 안에 주소가 섞여 있으면 그 주소만 꺼낸다. javascript: 같은 건 버린다.
+  function safeLink(raw){
+    let s = String(raw || "").trim();
+    if (!s) return "";
+    const m = s.match(URL_RE);
+    if (m) s = m[0];
+    else if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s)) s = "https://" + s;
+    else return "";
+    s = s.replace(/[)\].,!?'"]+$/, "");
+    try { const u = new URL(s); return /^https?:$/.test(u.protocol) ? u.href : ""; } catch (e) { return ""; }
+  }
+  function storeFromUrl(link){
+    let host;
+    try { host = new URL(link).hostname.toLowerCase(); } catch (e) { return ""; }
+    host = host.replace(/^(www|m|mw|mobile)\./, "");
+    for (const [d, name] of SHOPS){
+      if (d.endsWith(".") ? host.includes(d) : (host === d || host.endsWith("." + d))) return name;
+    }
+    const p = host.split(".");
+    if (p.length < 2) return "";
+    let i = p.length - 2;
+    if (i > 0 && ["co", "or", "ne", "go", "ac", "com"].includes(p[i])) i--;
+    return p[i];
+  }
+  // 쇼핑 앱 '공유'로 복사한 글(상품명 + 주소, 가끔 가격)을 이름·링크·가게·가격으로 나눈다.
+  function fromShared(text){
+    const m = text.match(URL_RE);
+    const link = safeLink(m ? m[0] : "");
+    let price = 0;
+    const keep = [];
+    for (let line of text.replace(m ? m[0] : "", "\n").split(/\n+/)){
+      line = line.replace(/\[[^\]]{0,20}\]/g, " ");
+      // 가격은 줄 어디에 있든 꺼내고 이름에서는 뺀다.
+      line = line.replace(/(?:판매가|할인가|최종가|가격)?\s*:?\s*(\d{1,3}(?:,\d{3})+|\d{3,})\s*원/, (all, p) => { price = price || +p.replace(/,/g, ""); return " "; });
+      line = line.replace(/\s+/g, " ").trim();
+      if (!line) continue;
+      if (line.length < 30 && /추천합니다|공유|친구에게|앱에서 보기|지금 확인/.test(line)) continue;
+      keep.push(line);
+    }
+    const name = keep.join(" ").replace(/^[\s\-:·|]+|[\s\-:·|]+$/g, "").slice(0, 60).trim();
+    return { name, qty: null, unit: "", link, store: storeFromUrl(link), price };
+  }
+
+  // ---- 저장 (이 휴대폰의 브라우저에만) ----
+  function load(){
+    try {
+      const d = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+      if (d && Array.isArray(d.items) && Array.isArray(d.history)) return d;
+    } catch (e) {}
+    const d = { v: 2, items: [], history: [] };
+    try {
+      const old = JSON.parse(localStorage.getItem(OLD_KEY) || "null");
+      if (old && typeof old === "object"){
+        for (const [id, o] of Object.entries(old)){
+          if (!o || !o.name) continue;
+          const q = qtyFromOld(o.qty);
+          if (o.need) d.items.push({ id, name: o.name, qty: q.qty, unit: q.unit, date: "", store: "", link: "", price: 0, addedAt: o.addedAt || Date.now() });
+          if (o.count > 0 && o.lastBought) d.history.push({ id: "h" + id, name: o.name, qty: q.qty, unit: q.unit, store: "", link: "", price: 0, at: o.lastBought });
+        }
+        d.items.sort((a, b) => a.addedAt - b.addedAt);
+        d.history.sort((a, b) => b.at - a.at);
+      }
+    } catch (e) {}
+    return d;
+  }
+  const data = load();
+  function save(){
+    if (data.history.length > HIST_MAX) data.history.length = HIST_MAX;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+    catch (e) { notice.textContent = "이 브라우저에서는 저장이 안 돼서, 창을 닫으면 목록이 사라져요."; notice.hidden = false; }
+  }
+  save();
+
+  const ui = { store: "", addDate: "", composing: false, flashId: "" };
+  const findItem = id => data.items.find(i => i.id === id);
+  const lastOf = n => data.history.find(h => norm(h.name) === n);   // history는 최근 것이 앞
+  // 같은 물건을 산 기록 중 가게나 링크를 적어 둔 가장 최근 한 건. 가게와 링크가 서로 다른 구매에서 섞이지 않게 한 건에서만 가져온다.
+  function memoryOf(n){
+    const h = data.history.find(x => norm(x.name) === n && (x.store || x.link));
+    return { store: h ? h.store : "", link: h ? h.link : "" };
+  }
 
   // ---- 동작 ----
-  function addEntry(raw){
-    const e = parseEntry(raw);
-    if (!e) return;
-    const ex = state.items.find(i => norm(i.name) === norm(e.name));
-    if (ex){
-      const p = { need: true, checked: false };
-      if (e.qty) p.qty = e.qty;
-      patch(ex.id, p);
-    } else {
-      put(newId(), { name: e.name, qty: e.qty, cat: guessCat(e.name), need: true, checked: false, count: 0, lastBought: 0, addedAt: Date.now() });
+  function addItem(e, opts){
+    const n = norm(e.name);
+    if (n){
+      const ex = data.items.find(i => norm(i.name) === n);
+      if (ex){
+        if (e.qty){ ex.qty = e.qty; ex.unit = e.unit || ex.unit; save(); ui.flashId = ex.id; render(); toast(`‘${ex.name}’ 수량을 ${qtyText(ex) || "1"}로 바꿨어요`); }
+        else {
+          ui.flashId = ex.id; render();
+          toast(`‘${ex.name}’은 이미 있어요`, "수량 +1", () => { ex.qty = clampQty(ex.qty + 1); save(); ui.flashId = ex.id; render(); });
+        }
+        return ex;
+      }
     }
+    // 전에 산 적이 있으면 그때 가게·링크를 그대로 채운다.
+    const mem = n ? memoryOf(n) : { store: "", link: "" };
+    const it = {
+      id: newId(), name: e.name, qty: e.qty || 1, unit: e.unit || "",
+      date: opts && "date" in opts ? opts.date : ui.addDate,
+      store: e.store || (e.link ? storeFromUrl(e.link) : "") || mem.store,
+      link: e.link || mem.link, price: e.price || 0, addedAt: Date.now()
+    };
+    data.items.push(it);
+    save();
+    ui.flashId = it.id;
+    render();
+    return it;
   }
-  const toggle = it => patch(it.id, { checked: !it.checked });
-  const relist = it => patch(it.id, { need: true, checked: false });
-  function unlist(it){
-    patch(it.id, { need: false, checked: false });
-    toast(`‘${it.name}’ 뺐어요`, "되돌리기", () => patch(it.id, { need: true, checked: !!it.checked }));
+  function addText(text){
+    const t = text.trim();
+    if (!t) return;
+    // 주소가 든 글(쇼핑 앱에서 공유로 복사한 것)은 쉼표가 있어도 한 개로 본다.
+    if (URL_RE.test(t)){
+      const it = addItem(fromShared(t));
+      if (!it.name){ addInput.blur(); openItemSheet(it.id, true); }
+      return;
+    }
+    t.split(/[,，\n]/).map(s => s.trim()).filter(Boolean).forEach(p => { const e = parseEntry(p); if (e) addItem(e); });
   }
-  function purge(it){
-    const data = Object.assign({}, it); delete data.id;
-    drop(it.id);
-    toast(`‘${it.name}’ 기록을 지웠어요`, "되돌리기", () => put(it.id, data));
-  }
-  function finish(){
-    const done = state.items.filter(i => i.need && i.checked);
-    if (!done.length) return;
-    const before = done.map(i => ({ id: i.id, count: i.count || 0, lastBought: i.lastBought || 0 }));
-    const now = Date.now();
-    done.forEach(i => { map[i.id] = Object.assign({}, map[i.id], { need: false, checked: false, count: (i.count || 0) + 1, lastBought: now }); });
-    commit();
-    toast(`${done.length}개를 구매 기록으로 옮겼어요`, "되돌리기", () => {
-      before.forEach(b => { if (map[b.id]) map[b.id] = Object.assign({}, map[b.id], { need: true, checked: true, count: b.count, lastBought: b.lastBought }); });
-      commit();
+  function buy(id){
+    const i = data.items.findIndex(x => x.id === id);
+    if (i < 0) return;
+    const it = data.items[i];
+    const h = { id: newId(), name: it.name || "이름 없음", qty: it.qty, unit: it.unit, store: it.store, link: it.link, price: it.price || 0, at: Date.now() };
+    data.items.splice(i, 1);
+    data.history.unshift(h);
+    save(); render();
+    toast(`‘${h.name}’ 샀어요`, "되돌리기", () => {
+      data.history = data.history.filter(x => x.id !== h.id);
+      data.items.splice(Math.min(i, data.items.length), 0, it);
+      save(); render();
     });
   }
-  async function share(){
-    const left = state.items.filter(i => i.need && !i.checked).sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
-    if (!left.length) return;
-    const text = "살 것\n" + left.map(i => "· " + i.name + (i.qty ? " " + i.qty : "")).join("\n");
-    if (navigator.share){
-      try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
-    }
-    try { await navigator.clipboard.writeText(text); toast("목록을 복사했어요. 메신저에 붙여 넣으면 돼요."); }
-    catch (e) { toast("복사하지 못했어요."); }
+  function removeItem(id){
+    const i = data.items.findIndex(x => x.id === id);
+    if (i < 0) return;
+    const it = data.items.splice(i, 1)[0];
+    save(); render();
+    toast(`‘${it.name || "이름 없음"}’ 지웠어요`, "되돌리기", () => { data.items.splice(Math.min(i, data.items.length), 0, it); save(); render(); });
+  }
+  function reAdd(h){
+    const inList = data.items.find(i => norm(i.name) === norm(h.name));
+    if (inList){ toast(`‘${h.name}’은 이미 목록에 있어요`); return; }
+    addItem({ name: h.name, qty: h.qty, unit: h.unit, store: h.store, link: h.link }, { date: "" });
+    renderHistory();
+    toast(`‘${h.name}’ 다시 담았어요`);
   }
 
-  // ---- 화면 ----
-  function showNotice(msg){ notice.textContent = msg; notice.hidden = false; }
+  // ---- 토스트 ----
   let toastTimer = 0;
-  function hideToast(){ toastEl.hidden = true; }
+  const hideToast = () => { toastEl.hidden = true; };
   function toast(msg, label, action){
     toastEl.replaceChildren(el("span", { text: msg }),
       label ? el("button", { class: "toast-act", type: "button", onclick: () => { hideToast(); action(); } }, label) : null);
     toastEl.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, label ? 6000 : 2600);
+    toastTimer = setTimeout(hideToast, label ? 5000 : 2400);
   }
 
-  function row(it){
-    const main = el("button", { class: "row-main", type: "button", "aria-pressed": String(!!it.checked),
-      "aria-label": it.name + (it.qty ? " " + it.qty : ""), onclick: () => toggle(it) },
-      el("span", { class: "tick", html: ICON_CHECK }),
-      el("span", { class: "body" },
-        el("span", { class: "name", text: it.name }),
-        it.qty ? el("span", { class: "qty", text: it.qty }) : null));
-    const li = el("li", { class: "row" + (it.checked ? " is-done" : "") }, main);
-    if (state.editing){
-      const sel = el("select", { class: "catsel", id: "cat-" + it.id, "aria-label": it.name + " 분류",
-        onchange: e => patch(it.id, { cat: e.target.value }) });
-      CATS.forEach(([k, label]) => { const o = el("option", { value: k, text: label }); if (k === catOf(it)) o.selected = true; sel.append(o); });
-      li.append(el("span", { class: "edit" }, sel,
-        el("button", { class: "minus", type: "button", "aria-label": it.name + " 목록에서 빼기", html: ICON_MINUS, onclick: () => unlist(it) })));
-    }
-    return li;
-  }
-
-  function chip(it){
-    return el("button", { class: "chip" + (state.editing ? " is-del" : ""), type: "button",
-      "aria-label": it.name + (state.editing ? " 기록 지우기" : " 다시 추가"),
-      onclick: () => (state.editing ? purge(it) : relist(it)) },
-      el("span", { text: it.name }),
-      state.editing ? el("span", { "aria-hidden": "true", text: "×" })
-                    : (it.count > 1 ? el("span", { class: "n", text: "×" + it.count }) : null));
-  }
+  // ---- 목록 화면 ----
+  const inStore = it => !ui.store || (ui.store === "\u0000" ? !it.store : it.store === ui.store);
 
   function render(){
-    const byAdded = (a, b) => (a.addedAt || 0) - (b.addedAt || 0);
-    const need = state.items.filter(i => i.need);
-    const left = need.filter(i => !i.checked);
-    const cart = need.filter(i => i.checked).sort(byAdded);
-    const hist = state.items.filter(i => !i.need)
-      .sort((a, b) => (b.count || 0) - (a.count || 0) || (b.lastBought || 0) - (a.lastBought || 0));
+    const t = today();
+    const all = data.items;
+    const items = all.filter(inStore);
+    const byAdded = (a, b) => a.addedAt - b.addedAt;
+    const over = items.filter(i => i.date && i.date < t).sort((a, b) => a.date.localeCompare(b.date) || byAdded(a, b));
+    const now = items.filter(i => i.date === t).sort(byAdded);
+    const any = items.filter(i => !i.date).sort(byAdded);
+    const later = items.filter(i => i.date > t).sort((a, b) => a.date.localeCompare(b.date) || byAdded(a, b));
 
-    tally.textContent = need.length ? `${left.length}개 남음 · ${cart.length}개 담음` : "살 것을 적어 두세요";
-    editBtn.hidden = !state.items.length;
-    editBtn.textContent = state.editing ? "완료" : "편집";
-    editBtn.setAttribute("aria-pressed", String(state.editing));
-    shareBtn.hidden = !left.length;
+    tally.textContent = all.length ? `${all.length}개 남음` : data.history.length ? "다 샀어요" : " ";
+
+    // 개수 타일
+    tilesEl.hidden = !all.length;
+    const tile = (label, n, cls, target) => el("button", {
+      class: "tile" + (n ? "" : " is-zero") + (n && cls ? " " + cls : ""), type: "button",
+      "aria-label": `${label} ${n}개`, onclick: () => { const s = $(target); if (n && s) s.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); }
+    }, el("span", { class: "tl", text: label }), el("span", { class: "tn", text: String(n) }));
+    tilesEl.replaceChildren(
+      tile("지난 것", over.length, "is-over", "sec-over"),
+      tile("오늘", now.length, "is-today", "sec-today"),
+      tile("언제든", any.length, "", "sec-any"),
+      tile("예정", later.length, "", "sec-later"));
+
+    // 가게 칩: 가게를 적은 게 하나라도 있을 때만
+    const counts = new Map(); let noStore = 0;
+    all.forEach(i => { if (i.store) counts.set(i.store, (counts.get(i.store) || 0) + 1); else noStore++; });
+    if (ui.store && ui.store !== "\u0000" && !counts.has(ui.store)) ui.store = "";
+    if (ui.store === "\u0000" && !noStore) ui.store = "";
+    storesEl.hidden = !counts.size;
+    const schip = (label, n, value) => el("button", { class: "c", type: "button", "aria-pressed": String(ui.store === value),
+      onclick: () => { ui.store = ui.store === value ? "" : value; render(); } }, label, el("span", { class: "n", text: String(n) }));
+    storesEl.replaceChildren(schip("전체", all.length, ""),
+      ...[...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko")).map(([s, n]) => schip(s, n, s)),
+      noStore && counts.size ? schip("가게 미정", noStore, "\u0000") : null);
 
     const parts = [];
-    if (!left.length){
-      const first = !state.items.length;
-      parts.push(el("div", { class: "empty" },
-        el("p", { class: "empty-title", text: first ? "목록이 비어 있어요" : cart.length ? "다 담았어요" : "지금은 살 게 없어요" }),
-        el("p", { text: first
-          ? "아래 칸에 ‘우유 2, 건전지, 수건’처럼 쉼표로 여러 개를 한 번에 적을 수 있어요. 이름 뒤 숫자는 수량이 되고, 종류별로 알아서 묶여요."
-          : cart.length ? "계산까지 끝났으면 ‘구매 완료’를 눌러 정리하세요."
-          : "아래 칸에 적거나, 구매 기록에서 눌러 다시 추가하세요." })));
-    } else {
-      for (const [k, label] of CATS){
-        const rows = left.filter(i => catOf(i) === k).sort(byAdded);
-        if (!rows.length) continue;
-        parts.push(el("section", { class: "group" },
-          el("h2", { class: "ghead" }, label, el("span", { class: "n", text: String(rows.length) })),
-          el("ul", { class: "card" }, ...rows.map(row))));
-      }
+    if (!all.length) parts.push(emptyState());
+    const section = (id, cls, title, sub, rows, showDate) => {
+      if (!rows.length) return;
+      parts.push(el("section", { class: "sec " + cls, id },
+        el("h2", { class: "sec-h" }, title, sub ? el("span", { class: "sub", text: sub }) : null, el("span", { class: "n", text: String(rows.length) })),
+        el("ul", { class: "card" }, ...rows.map(it => row(it, showDate)))));
+    };
+    const wd = k => WD[fromKey(k).getDay()] + "요일";
+    section("sec-over", "sec-over", "지난 것", "날짜가 지났어요", over, true);
+    section("sec-today", "sec-today", "오늘", `${mdk(t)} ${wd(t)}`, now, false);
+    section("sec-any", "sec-any", "언제든", "", any, false);
+    let first = true;
+    for (const k of [...new Set(later.map(i => i.date))]){
+      const label = k === tomorrow() ? "내일" : mdk(k);
+      section(first ? "sec-later" : "", "", label, k === tomorrow() ? `${mdk(k)} ${wd(k)}` : wd(k), later.filter(i => i.date === k), false);
+      first = false;
     }
     lists.replaceChildren(...parts);
 
-    cartSec.hidden = !cart.length;
-    cartN.textContent = String(cart.length);
-    cartList.replaceChildren(...cart.map(row));
-
-    histHint.textContent = state.editing ? "누르면 기록에서 지워요"
-      : hist.length ? "누르면 목록에 다시 들어가요"
-      : "‘구매 완료’로 정리한 것이 여기 모여요. 다음엔 눌러서 바로 다시 추가할 수 있어요.";
-    chipsEl.replaceChildren(...hist.slice(0, 40).map(chip));
-    const have = new Set(state.items.map(i => norm(i.name)));
-    const ex = (!state.editing && hist.length < 8) ? EXAMPLES.filter(s => !have.has(norm(s))) : [];
-    exWrap.hidden = !ex.length;
-    exChips.replaceChildren(...ex.map(s => el("button", { class: "chip is-example", type: "button", "aria-label": s + " 추가", onclick: () => addEntry(s) }, s)));
+    if (ui.flashId){
+      const li = lists.querySelector(`[data-id="${ui.flashId}"]`);
+      ui.flashId = "";
+      if (li){ li.classList.add("is-new"); li.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }); }
+    }
+    renderComposer();
   }
+
+  function emptyState(){
+    const tip = (ic, text) => el("li", null, icon(ic), el("span", { text }));
+    return el("div", { class: "empty" },
+      el("div", { class: "badge", html: I.bag }),
+      el("h2", { text: data.history.length ? "다 샀어요" : "살 것을 적어 보세요" }),
+      el("p", { text: data.history.length ? "산 것은 오른쪽 위 ‘기록’에 언제·어디서 샀는지 남아 있어요." : "아래 칸에 적으면 날짜별로 정리돼요." }),
+      data.history.length ? null : el("ul", { class: "tips" },
+        tip(I.plus, "‘우유 2, 건전지’처럼 쉼표로 여러 개를 한 번에"),
+        tip(I.link, "쇼핑몰 링크를 붙여 넣으면 가게까지 알아서"),
+        tip(I.check, "오른쪽으로 밀면 샀음, 왼쪽으로 밀면 삭제")));
+  }
+
+  function row(it, showDate){
+    const q = qtyText(it);
+    const meta = [];
+    if (showDate && it.date) meta.push(el("span", { class: "warn", text: mdk(it.date) }));
+    if (it.store) meta.push(el("span", { text: it.store }));
+    if (it.price) meta.push(el("span", { text: won(it.price) }));
+    const label = (it.name || "이름 없음") + (q ? " " + q : "");
+    const fg = el("div", { class: "row-fg" },
+      el("button", { class: "tick", type: "button", "aria-label": label + " 샀어요", onclick: () => tickBuy(li, it.id) },
+        el("i", { html: I.check })),
+      el("button", { class: "rbody", type: "button", "aria-label": label + " 고치기", onclick: () => openItemSheet(it.id) },
+        el("span", { class: "nline" }, el("span", { class: "name" + (it.name ? "" : " is-blank"), text: it.name || "이름 없음" }), q ? el("span", { class: "qty", text: q }) : null),
+        meta.length ? el("span", { class: "meta" }, ...meta) : null),
+      it.link ? el("a", { class: "go", href: it.link, target: "_blank", rel: "noopener noreferrer", "aria-label": `${it.name} 링크 열기${it.store ? " (" + it.store + ")" : ""}`, html: I.ext }) : null);
+    const li = el("li", { class: "row", "data-id": it.id },
+      el("div", { class: "swipe-bg", "aria-hidden": "true" },
+        el("span", { class: "sb-buy", html: I.check + "샀어요" }),
+        el("span", { class: "sb-del", html: I.trash + "삭제" })),
+      fg);
+    attachSwipe(li, fg, it.id);
+    return li;
+  }
+
+  function collapse(li, then){
+    if (reduceMotion || !li.isConnected){ then(); return; }
+    li.style.height = li.offsetHeight + "px";
+    void li.offsetHeight;
+    li.style.transition = "height .2s ease";
+    li.style.height = "0px";
+    setTimeout(then, 200);
+  }
+  function tickBuy(li, id){
+    if (li.dataset.busy) return;
+    li.dataset.busy = "1";
+    li.classList.add("is-bought");
+    setTimeout(() => collapse(li, () => buy(id)), reduceMotion ? 0 : 280);
+  }
+
+  // 오른쪽으로 밀면 샀음, 왼쪽으로 밀면 삭제. 세로로 먼저 움직이면 스크롤로 넘긴다.
+  function attachSwipe(li, fg, id){
+    let x0 = 0, y0 = 0, dx = 0, pid = null, tracking = false, sliding = false;
+    const limit = () => Math.min(120, li.offsetWidth * 0.32);
+    fg.addEventListener("pointerdown", e => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (li.dataset.busy) return;
+      x0 = e.clientX; y0 = e.clientY; dx = 0; pid = e.pointerId; tracking = true; sliding = false;
+    });
+    fg.addEventListener("pointermove", e => {
+      if (!tracking || e.pointerId !== pid) return;
+      const mx = e.clientX - x0, my = e.clientY - y0;
+      if (!sliding){
+        if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+        if (Math.abs(my) >= Math.abs(mx)){ tracking = false; return; }
+        sliding = true;
+        try { fg.setPointerCapture(pid); } catch (err) {}
+        fg.style.transition = "none";
+      }
+      dx = mx;
+      fg.style.transform = `translateX(${dx}px)`;
+      li.dataset.dir = dx > 0 ? "buy" : "del";
+      li.classList.toggle("is-armed", Math.abs(dx) > limit());
+    });
+    const end = e => {
+      if (!tracking || e.pointerId !== pid) return;
+      tracking = false;
+      if (!sliding) return;
+      fg._swiped = true;
+      setTimeout(() => { fg._swiped = false; }, 400);
+      const go = e.type !== "pointercancel" && Math.abs(dx) > limit();
+      if (go){
+        li.dataset.busy = "1";
+        const dir = dx > 0 ? 1 : -1;
+        fg.style.transition = reduceMotion ? "none" : "transform .18s ease-in";
+        fg.style.transform = `translateX(${dir * 110}%)`;
+        setTimeout(() => collapse(li, () => (dir > 0 ? buy(id) : removeItem(id))), reduceMotion ? 0 : 170);
+      } else {
+        fg.style.transition = "transform .2s ease";
+        fg.style.transform = "";
+        setTimeout(() => { delete li.dataset.dir; li.classList.remove("is-armed"); }, 200);
+      }
+    };
+    fg.addEventListener("pointerup", end);
+    fg.addEventListener("pointercancel", end);
+    // 밀고 손을 뗄 때 따라오는 '누름'은 무시한다.
+    fg.addEventListener("click", e => { if (fg._swiped){ e.preventDefault(); e.stopPropagation(); fg._swiped = false; } }, true);
+  }
+
+  // ---- 입력칸 ----
+  const keepFocus = e => e.preventDefault();   // 칩을 눌러도 키보드가 내려가지 않게
+  function dateChips(current, onPick, keep){
+    const t = today(), tm = tomorrow();
+    const custom = current && current !== t && current !== tm;
+    const mk = (label, value) => el("button", { class: "c", type: "button", "aria-pressed": String(current === value),
+      onpointerdown: keep ? keepFocus : null, onmousedown: keep ? keepFocus : null, onclick: () => onPick(value) }, label);
+    const picker = el("input", { type: "date", value: custom ? current : "", "aria-label": "날짜 고르기" });
+    picker.addEventListener("change", () => onPick(picker.value || ""));
+    // 휴대폰은 눌러도 달력이 뜨지만, 일부 브라우저는 직접 띄워야 한다.
+    picker.addEventListener("click", () => { if (typeof picker.showPicker === "function"){ try { picker.showPicker(); } catch (err) {} } });
+    return [mk("언제든", ""), mk("오늘", t), mk("내일", tm),
+      el("label", { class: "c" + (custom ? " on" : "") }, icon(I.cal), custom ? `${mdk(current)} ${WD[fromKey(current).getDay()]}` : "날짜", picker)];
+  }
+
+  function suggestions(q){
+    if (URL_RE.test(q)) return [];
+    const have = new Set(data.items.map(i => norm(i.name)));
+    const seen = new Map();
+    for (const h of data.history){
+      const k = norm(h.name);
+      if (!k || have.has(k)) continue;
+      const s = seen.get(k);
+      if (s) s.count++; else seen.set(k, { h, count: 1 });
+    }
+    let list = [...seen.entries()];
+    const nq = norm(q);
+    if (nq){
+      list = list.filter(([k]) => k.includes(nq) && k !== nq)
+        .sort((a, b) => (b[0].startsWith(nq) - a[0].startsWith(nq)) || b[1].count - a[1].count);
+    } else {
+      list.sort((a, b) => b[1].count - a[1].count || b[1].h.at - a[1].h.at);
+    }
+    return list.slice(0, 8).map(([k, s]) => Object.assign({}, s.h, memoryOf(k)));
+  }
+
+  function renderComposer(){
+    const q = addInput.value;
+    const open = ui.composing || !!q.trim() || !!ui.addDate;
+    whenEl.hidden = !open;
+    if (open) whenEl.replaceChildren(...dateChips(ui.addDate, v => { ui.addDate = v; renderComposer(); }, true));
+    const sug = (ui.composing || q.trim()) ? suggestions(q) : [];
+    sugEl.hidden = !sug.length;
+    sugEl.replaceChildren(...sug.map(h => el("button", { class: "c", type: "button", "aria-label": `${h.name} 추가${h.store ? ", 지난번 " + h.store : ""}`,
+      onpointerdown: keepFocus, onmousedown: keepFocus,
+      onclick: () => { addItem({ name: h.name, qty: h.qty, unit: h.unit, store: h.store, link: h.link }); addInput.value = ""; renderComposer(); } },
+      icon(I.history), h.name, h.store ? el("span", { class: "dim", text: "· " + h.store }) : null)));
+    addInput.placeholder = ui.addDate ? `${dateWord(ui.addDate)} 살 것 적기` : "살 것 적기 · 링크 붙여 넣기도 돼요";
+  }
+
+  // ---- 고치기 시트 ----
+  let sheetClose = null;
+  function openSheet(build, onClose){
+    const wasOpen = !sheetWrap.hidden;
+    if (wasOpen) closeSheet(true);
+    sheet.replaceChildren(el("div", { class: "grab" }), build());
+    sheetWrap.hidden = false;
+    document.body.classList.add("on-sheet");
+    sheetClose = onClose || null;
+    const names = new Map();
+    [...data.items, ...data.history].forEach(x => { if (x.store) names.set(x.store, (names.get(x.store) || 0) + 1); });
+    storeList.replaceChildren(...[...names].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([s]) => el("option", { value: s })));
+    // 안드로이드 '뒤로'가 앱을 닫지 않고 시트만 닫게 기록을 하나 쌓는다.
+    const st = Object.assign({}, history.state, { sheet: 1 });
+    if (wasOpen) history.replaceState(st, ""); else history.pushState(st, "");
+  }
+  function closeSheet(fromPop){
+    if (sheetWrap.hidden) return;
+    if (document.activeElement && sheet.contains(document.activeElement)) document.activeElement.blur();
+    sheetWrap.hidden = true;
+    document.body.classList.remove("on-sheet");
+    const done = sheetClose; sheetClose = null;
+    sheet.replaceChildren();
+    if (done) done();
+    if (!fromPop && history.state && history.state.sheet) history.back();
+  }
+  $("scrim").addEventListener("click", () => closeSheet());
+
+  const f = (label, ...kids) => el("label", { class: "f" }, el("span", { class: "fl", text: label }), ...kids);
+  function priceInput(value, onChange, placeholder){
+    const inp = el("input", { type: "text", inputmode: "numeric", value: value ? Number(value).toLocaleString("ko-KR") : "", placeholder, "aria-label": "가격" });
+    inp.addEventListener("input", () => {
+      const digits = inp.value.replace(/\D/g, "").slice(0, 9);
+      const n = digits ? +digits : 0;
+      inp.value = n ? n.toLocaleString("ko-KR") : "";
+      onChange(n);
+    });
+    return inp;
+  }
+  function linkInput(value, onLink){
+    const inp = el("input", { type: "url", inputmode: "url", value, placeholder: "붙여 넣으면 가게가 채워져요", "aria-label": "링크", autocapitalize: "off", autocorrect: "off", spellcheck: "false" });
+    const open = el("a", { class: "go", target: "_blank", rel: "noopener noreferrer", "aria-label": "링크 열기", html: I.ext, href: value || null, hidden: !value });
+    inp.addEventListener("input", () => {
+      const raw = inp.value;
+      const L = safeLink(raw);
+      // 공유 글을 통째로 붙여 넣었으면 주소만 남기고 나머지(상품명·가격)는 비어 있는 칸에 채운다.
+      if (L && /\s/.test(raw.trim())){ inp.value = L; onLink(L, fromShared(raw)); }
+      else onLink(L, null);
+      open.hidden = !L;
+      if (L) open.href = L;
+    });
+    return [inp, open];
+  }
+
+  function openItemSheet(id, focusName){
+    const it = findItem(id);
+    if (!it) return;
+    const upd = p => { Object.assign(it, p); save(); };
+    let autoStore = it.link && it.store === storeFromUrl(it.link) ? it.store : "";
+    const last = lastOf(norm(it.name));
+    const lastPriced = data.history.find(h => norm(h.name) === norm(it.name) && h.price > 0);
+    let nameIn, storeIn, priceIn;
+    openSheet(() => {
+      nameIn = el("input", { class: "sheet-name", type: "text", value: it.name, placeholder: "이름", maxlength: "60", "aria-label": "이름", enterkeyhint: "done" });
+      nameIn.addEventListener("input", () => upd({ name: nameIn.value.trim() }));
+      nameIn.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); nameIn.blur(); } });
+      const out = el("output", { text: qtyText(it) || "1" });
+      const minus = el("button", { type: "button", "aria-label": "수량 줄이기", html: I.minus, disabled: it.qty <= 1 });
+      const setQty = n => { upd({ qty: clampQty(n) }); out.textContent = qtyText(it) || "1"; minus.disabled = it.qty <= 1; };
+      minus.addEventListener("click", () => setQty(it.qty - 1));
+      const dates = el("div", { class: "chips" });
+      const drawDates = () => dates.replaceChildren(...dateChips(it.date, v => { upd({ date: v }); drawDates(); }, false));
+      drawDates();
+      storeIn = el("input", { type: "text", value: it.store, placeholder: "쿠팡, 다이소, 동네 마트…", list: "storeList", maxlength: "30", "aria-label": "어디서", enterkeyhint: "done" });
+      storeIn.addEventListener("input", () => { autoStore = ""; upd({ store: storeIn.value.trim() }); });
+      priceIn = priceInput(it.price, n => upd({ price: n }), lastPriced ? `지난번 ${won(lastPriced.price)}${lastPriced.store ? " (" + lastPriced.store + ")" : ""}` : "몰라도 돼요");
+      const [linkIn, openA] = linkInput(it.link, (L, shared) => {
+        upd({ link: L });
+        const s = L ? storeFromUrl(L) : "";
+        if (!storeIn.value.trim() || storeIn.value.trim() === autoStore){ storeIn.value = s; autoStore = s; upd({ store: s }); }
+        if (shared){
+          if (!nameIn.value.trim() && shared.name){ nameIn.value = shared.name; upd({ name: shared.name }); }
+          if (!it.price && shared.price){ upd({ price: shared.price }); priceIn.value = shared.price.toLocaleString("ko-KR"); }
+        }
+      });
+      return el("div", { class: "col" },
+        el("div", { class: "sheet-top" }, nameIn, el("button", { class: "x", type: "button", "aria-label": "닫기", html: I.x, onclick: () => closeSheet() })),
+        el("div", { class: "group" },
+          el("div", { class: "f" }, el("span", { class: "fl", text: "수량" }),
+            el("div", { class: "stepper" }, minus, out, el("button", { type: "button", "aria-label": "수량 늘리기", html: I.plus, onclick: () => setQty(it.qty + 1) }))),
+          el("div", { class: "f" }, el("span", { class: "fl", text: "언제" }), dates)),
+        el("div", { class: "group" },
+          f("어디서", storeIn),
+          f("링크", linkIn, openA),
+          f("가격", priceIn, el("span", { class: "won", text: "원" }))),
+        last ? el("p", { class: "last", text: `지난번: ${md(new Date(last.at))}${last.store ? " · " + last.store : ""}${last.price ? " · " + won(last.price) : ""}` }) : null,
+        el("div", { class: "actions" },
+          el("button", { class: "btn-main", type: "button", html: I.check + "샀어요", onclick: () => { closeSheet(); buy(id); } }),
+          el("button", { class: "btn-del", type: "button", html: I.trash + "삭제", onclick: () => { closeSheet(); removeItem(id); } })));
+    }, () => {
+      const cur = findItem(id);
+      if (cur && !cur.name){ cur.name = (cur.store || "링크") + " 상품"; save(); }
+      render();
+    });
+    if (focusName) setTimeout(() => nameIn && nameIn.focus(), 60);
+  }
+
+  function openHistSheet(hid){
+    const h = data.history.find(x => x.id === hid);
+    if (!h) return;
+    const upd = p => { Object.assign(h, p); save(); };
+    openSheet(() => {
+      const nameIn = el("input", { class: "sheet-name", type: "text", value: h.name, maxlength: "60", "aria-label": "이름", enterkeyhint: "done" });
+      nameIn.addEventListener("input", () => { if (nameIn.value.trim()) upd({ name: nameIn.value.trim() }); });
+      const dateIn = el("input", { type: "date", value: dayKey(new Date(h.at)), max: today(), "aria-label": "산 날" });
+      dateIn.addEventListener("change", () => { if (dateIn.value){ const d = fromKey(dateIn.value); d.setHours(12); upd({ at: d.getTime() }); data.history.sort((a, b) => b.at - a.at); save(); } });
+      const storeIn = el("input", { type: "text", value: h.store, placeholder: "어디서 샀는지", list: "storeList", maxlength: "30", "aria-label": "어디서" });
+      storeIn.addEventListener("input", () => upd({ store: storeIn.value.trim() }));
+      const [linkIn, openA] = linkInput(h.link, L => { upd({ link: L }); if (L && !storeIn.value.trim()){ storeIn.value = storeFromUrl(L); upd({ store: storeIn.value }); } });
+      return el("div", { class: "col" },
+        el("div", { class: "sheet-top" }, nameIn, el("button", { class: "x", type: "button", "aria-label": "닫기", html: I.x, onclick: () => closeSheet() })),
+        el("div", { class: "group" },
+          f("산 날", dateIn),
+          f("어디서", storeIn),
+          f("가격", priceInput(h.price, n => upd({ price: n }), "얼마였는지"), el("span", { class: "won", text: "원" })),
+          f("링크", linkIn, openA)),
+        el("div", { class: "actions" },
+          el("button", { class: "btn-main", type: "button", html: I.plus + "다시 담기", onclick: () => { closeSheet(); reAdd(h); } }),
+          el("button", { class: "btn-del", type: "button", html: I.trash + "기록 삭제", onclick: () => {
+            closeSheet();
+            const i = data.history.indexOf(h);
+            if (i >= 0){ data.history.splice(i, 1); save(); renderHistory(); }
+            toast(`‘${h.name}’ 기록을 지웠어요`, "되돌리기", () => { data.history.push(h); data.history.sort((a, b) => b.at - a.at); save(); renderHistory(); });
+          } })));
+    }, renderHistory);
+  }
+
+  // ---- 구매 기록 화면 ----
+  function histGroup(at){
+    const d = new Date(at), now = new Date(), k = dayKey(d);
+    if (k === dayKey(now)) return "오늘";
+    if (k === dayKey(addDays(now, -1))) return "어제";
+    if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) return "이번 달";
+    return d.getFullYear() === now.getFullYear() ? `${d.getMonth() + 1}월` : `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+  }
+  function renderHistory(){
+    if (histPage.hidden) return;
+    const q = norm(histQ.value);
+    const list = data.history.filter(h => !q || norm(h.name).includes(q) || norm(h.store).includes(q));
+
+    histSum.replaceChildren();
+    if (q && list.length){
+      const names = new Set(list.map(h => norm(h.name)));
+      const priced = list.filter(h => h.price > 0);
+      const lines = [];
+      if (names.size === 1){
+        const lastH = list[0];
+        lines.push(`마지막: ${md(new Date(lastH.at))}${lastH.store ? " · " + lastH.store : ""}`);
+        if (priced.length){
+          const lo = priced.reduce((a, b) => (b.price < a.price ? b : a));
+          lines.push(`최저 ${won(lo.price)}${lo.store ? " (" + lo.store + ")" : ""}` + (priced.length > 1 ? ` · 평균 ${won(Math.round(priced.reduce((s, h) => s + h.price, 0) / priced.length))}` : ""));
+        }
+      }
+      histSum.append(el("div", { class: "sumcard" },
+        el("b", { text: names.size === 1 ? `‘${list[0].name}’ ${list.length}번 샀어요` : `${list.length}건 찾았어요` }),
+        ...lines.map(t => el("p", { text: t }))));
+    }
+
+    if (!list.length){
+      histList.replaceChildren(el("div", { class: "empty" },
+        el("div", { class: "badge", html: q ? I.search : I.history }),
+        el("h2", { text: q ? "찾는 기록이 없어요" : "아직 산 게 없어요" }),
+        el("p", { text: q ? "이름이나 가게 이름 일부로 찾아보세요." : "목록에서 산 것을 체크하면 언제·어디서 샀는지 여기 남아요." })));
+      return;
+    }
+    const have = new Set(data.items.map(i => norm(i.name)));
+    const groups = [];
+    for (const h of list){
+      const g = histGroup(h.at);
+      if (!groups.length || groups[groups.length - 1][0] !== g) groups.push([g, []]);
+      groups[groups.length - 1][1].push(h);
+    }
+    histList.replaceChildren(...groups.map(([g, hs]) => el("section", null,
+      el("h2", { class: "sec-h" }, g, el("span", { class: "n", text: String(hs.length) })),
+      el("ul", { class: "card" }, ...hs.map(h => {
+        const q2 = qtyText(h);
+        const inList = have.has(norm(h.name));
+        return el("li", { class: "hrow" },
+          el("button", { class: "hmain", type: "button", "aria-label": `${h.name} 기록 고치기`, onclick: () => openHistSheet(h.id) },
+            el("span", { class: "nline" }, el("span", { class: "name", text: h.name }), q2 ? el("span", { class: "qty", text: q2 }) : null),
+            el("span", { class: "meta" }, el("span", { text: md(new Date(h.at)) }), h.store ? el("span", { text: h.store }) : null, h.price ? el("span", { text: won(h.price) }) : null)),
+          el("button", { class: "again" + (inList ? " is-in" : ""), type: "button", "aria-label": `${h.name} 다시 담기`, onclick: () => reAdd(h) }, inList ? "목록에 있음" : "다시 담기"));
+      })))));
+  }
+  function openHistory(){
+    if (!histPage.hidden) return;
+    histPage.hidden = false;
+    composer.hidden = true;
+    document.body.classList.add("on-page");
+    histPage.scrollTop = 0;
+    renderHistory();
+    history.pushState({ page: "hist" }, "");
+  }
+  function closeHistory(fromPop){
+    if (histPage.hidden) return;
+    histPage.hidden = true;
+    composer.hidden = false;
+    document.body.classList.remove("on-page");
+    histQ.value = "";
+    render();
+    if (!fromPop && history.state && history.state.page) history.back();
+  }
+  // '뒤로'로 돌아간 기록에 시트·기록 화면 표시가 없으면 닫는다.
+  window.addEventListener("popstate", e => {
+    const s = e.state || {};
+    if (!s.sheet && !sheetWrap.hidden) closeSheet(true);
+    if (s.page !== "hist" && !histPage.hidden) closeHistory(true);
+  });
+  if (history.state && (history.state.sheet || history.state.page)) history.replaceState(null, "");
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!sheetWrap.hidden) closeSheet(); else if (!histPage.hidden) closeHistory();
+  });
+
+  // ---- 연결 ----
+  $("histBtn").append(icon(I.history), el("span", { text: "기록" }));
+  $("histBack").append(icon(I.left), el("span", { text: "살 것" }));
+  $("searchIcon").append(icon(I.search));
+  $("addBtn").innerHTML = I.plus;
+  $("histBtn").addEventListener("click", openHistory);
+  $("histBack").addEventListener("click", () => closeHistory());
+  histQ.addEventListener("input", renderHistory);
 
   addForm.addEventListener("submit", e => {
     e.preventDefault();
-    const parts = addInput.value.split(/[,，\n]/).map(s => s.trim()).filter(Boolean);
-    if (!parts.length) return;
-    parts.forEach(addEntry);
+    const v = addInput.value;
+    if (!v.trim()) return;
     addInput.value = "";
-    addInput.focus();
+    addText(v);
+    renderComposer();
   });
-  editBtn.addEventListener("click", () => { state.editing = !state.editing; render(); });
-  shareBtn.addEventListener("click", share);
-  doneBtn.addEventListener("click", finish);
+  addInput.addEventListener("input", renderComposer);
+  // 한 줄 입력칸은 붙여 넣을 때 줄바꿈을 지워 버려서, 링크가 든 공유 글은 붙여 넣는 순간 원래 모양 그대로 처리한다.
+  addInput.addEventListener("paste", e => {
+    const raw = e.clipboardData && e.clipboardData.getData("text");
+    if (!raw || !URL_RE.test(raw)) return;
+    e.preventDefault();
+    const before = addInput.value.trim();
+    addInput.value = "";
+    addText(before ? before + "\n" + raw : raw);
+    renderComposer();
+  });
+  addInput.addEventListener("focus", () => { ui.composing = true; renderComposer(); });
+  // 날짜 고르는 창이 떠 있는 동안(초점이 입력칸 영역 안)에는 칩 줄을 접지 않는다.
+  composer.addEventListener("focusout", () => setTimeout(() => {
+    if (composer.contains(document.activeElement)) return;
+    ui.composing = false;
+    renderComposer();
+  }, 150));
 
-  commit();
+  // 입력칸 높이만큼 목록 아래를 비우고, 키보드가 올라오면 입력칸을 키보드 위로 올린다.
+  if ("ResizeObserver" in window){
+    new ResizeObserver(() => root.style.setProperty("--composer-h", composer.offsetHeight + "px")).observe(composer);
+  }
+  const vv = window.visualViewport;
+  if (vv){
+    const fit = () => {
+      const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      root.style.setProperty("--kb", kb + "px");
+      root.classList.toggle("kb-open", kb > 60);
+    };
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    fit();
+  }
+  // 자정을 넘겨 다시 열면 '오늘'·'지난 것'을 다시 나눈다.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden){ render(); renderHistory(); } });
 
-  // 오프라인(마트 안처럼 신호가 약한 곳)에서도 열리게 한다. https 에서만 동작.
-  if ("serviceWorker" in navigator && location.protocol === "https:"){
+  render();
+
+  // 인터넷이 약한 곳(마트 안)에서도 바로 열리게 한다. https(또는 개발용 localhost)에서만 동작.
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
 })();

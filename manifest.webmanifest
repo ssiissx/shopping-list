@@ -1,13 +1,13 @@
 {
   "name": "쇼핑 리스트",
   "short_name": "쇼핑 리스트",
-  "description": "종류별로 알아서 묶이는 살 것 목록",
+  "description": "날짜별로 적어 두고, 산 것은 언제·어디서 샀는지 기록으로 남는 살 것 목록",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F2F2F7",
-  "theme_color": "#F2F2F7",
+  "background_color": "#0E0F12",
+  "theme_color": "#0E0F12",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
