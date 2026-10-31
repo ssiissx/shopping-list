@@ -222,8 +222,8 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 .sumcard b{display:block;color:var(--lime);font-size:1.0625rem;font-weight:780}
 .sumcard p{margin:3px 0 0;color:#D6EE9C;font-size:.875rem}
 #histList{display:grid;gap:18px}
-.hrow{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 10px 0 14px}
-.hrow + .hrow{border-top:1px solid var(--sep)}
+.hrow{gap:10px;min-height:60px;padding:0 10px 0 14px}
+.row + .row .hrow::before{left:14px}
 .hmain{flex:1;min-width:0;align-self:stretch;padding:9px 0;border:0;background:none;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:2px}
 .again{flex:none;height:32px;padding:0 12px;border:0;border-radius:16px;background:var(--lime-soft);color:var(--lime);font-size:.8125rem;font-weight:720}
 .again.is-in{background:var(--field);color:var(--soft)}
@@ -544,6 +544,13 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     save(); render();
     toast(`‘${it.name || "이름 없음"}’ 지웠어요`, "되돌리기", () => { data.items.splice(Math.min(i, data.items.length), 0, it); save(); render(); });
   }
+  // 구매 기록 지우기. 되돌리기 없이 바로 지운다.
+  function removeHist(hid){
+    const i = data.history.findIndex(x => x.id === hid);
+    if (i < 0) return;
+    data.history.splice(i, 1);
+    save(); renderHistory();
+  }
   function reAdd(h){
     const inList = data.items.find(i => norm(i.name) === norm(h.name));
     if (inList){ toast(`‘${h.name}’은 이미 목록에 있어요`); return; }
@@ -661,7 +668,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
         el("span", { class: "sb-buy", html: I.check + "샀어요" }),
         el("span", { class: "sb-del", html: I.trash + "삭제" })),
       fg);
-    attachSwipe(li, fg, it.id);
+    attachSwipe(li, fg, { right: () => buy(it.id), left: () => removeItem(it.id) });
     return li;
   }
 
@@ -680,8 +687,9 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     setTimeout(() => collapse(li, () => buy(id)), reduceMotion ? 0 : 280);
   }
 
-  // 오른쪽으로 밀면 샀음, 왼쪽으로 밀면 삭제. 세로로 먼저 움직이면 스크롤로 넘긴다.
-  function attachSwipe(li, fg, id){
+  // 밀어서 하는 동작. acts.right = 오른쪽으로 밀 때(목록: 샀음), acts.left = 왼쪽으로 밀 때(삭제).
+  // 동작이 없는 쪽으로는 움직이지 않는다. 세로로 먼저 움직이면 스크롤로 넘긴다.
+  function attachSwipe(li, fg, acts){
     let x0 = 0, y0 = 0, dx = 0, pid = null, tracking = false, sliding = false;
     const limit = () => Math.min(120, li.offsetWidth * 0.32);
     fg.addEventListener("pointerdown", e => {
@@ -699,9 +707,9 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
         try { fg.setPointerCapture(pid); } catch (err) {}
         fg.style.transition = "none";
       }
-      dx = mx;
-      fg.style.transform = `translateX(${dx}px)`;
-      li.dataset.dir = dx > 0 ? "buy" : "del";
+      dx = (mx > 0 && !acts.right) || (mx < 0 && !acts.left) ? 0 : mx;
+      fg.style.transform = dx ? `translateX(${dx}px)` : "";
+      if (dx) li.dataset.dir = dx > 0 ? "buy" : "del"; else delete li.dataset.dir;
       li.classList.toggle("is-armed", Math.abs(dx) > limit());
     });
     const end = e => {
@@ -716,7 +724,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
         const dir = dx > 0 ? 1 : -1;
         fg.style.transition = reduceMotion ? "none" : "transform .18s ease-in";
         fg.style.transform = `translateX(${dir * 110}%)`;
-        setTimeout(() => collapse(li, () => (dir > 0 ? buy(id) : removeItem(id))), reduceMotion ? 0 : 170);
+        setTimeout(() => collapse(li, dir > 0 ? acts.right : acts.left), reduceMotion ? 0 : 170);
       } else {
         fg.style.transition = "transform .2s ease";
         fg.style.transform = "";
@@ -953,12 +961,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
           f("링크", linkIn, openA)),
         el("div", { class: "actions" },
           el("button", { class: "btn-main", type: "button", html: I.plus + "다시 담기", onclick: () => { closeSheet(); reAdd(h); } }),
-          el("button", { class: "btn-del", type: "button", html: I.trash + "기록 삭제", onclick: () => {
-            closeSheet();
-            const i = data.history.indexOf(h);
-            if (i >= 0){ data.history.splice(i, 1); save(); renderHistory(); }
-            toast(`‘${h.name}’ 기록을 지웠어요`, "되돌리기", () => { data.history.push(h); data.history.sort((a, b) => b.at - a.at); save(); renderHistory(); });
-          } })));
+          el("button", { class: "btn-del", type: "button", html: I.trash + "기록 삭제", onclick: () => { closeSheet(); removeHist(h.id); } })));
     }, renderHistory);
   }
 
@@ -997,7 +1000,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
       histList.replaceChildren(el("div", { class: "empty" },
         el("div", { class: "badge", html: q ? I.search : I.history }),
         el("h2", { text: q ? "찾는 기록이 없어요" : "아직 산 게 없어요" }),
-        el("p", { text: q ? "이름이나 가게 이름 일부로 찾아보세요." : "목록에서 산 것을 체크하면 언제·어디서 샀는지 여기 남아요." })));
+        el("p", { text: q ? "이름이나 가게 이름 일부로 찾아보세요." : "목록에서 산 것을 체크하면 언제·어디서 샀는지 여기 남아요. 지울 땐 왼쪽으로 밀면 돼요." })));
       return;
     }
     const have = new Set(data.items.map(i => norm(i.name)));
@@ -1012,11 +1015,17 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
       el("ul", { class: "card" }, ...hs.map(h => {
         const q2 = qtyText(h);
         const inList = have.has(norm(h.name));
-        return el("li", { class: "hrow" },
+        const fg = el("div", { class: "row-fg hrow" },
           el("button", { class: "hmain", type: "button", "aria-label": `${h.name} 기록 고치기`, onclick: () => openHistSheet(h.id) },
             el("span", { class: "nline" }, el("span", { class: "name", text: h.name }), q2 ? el("span", { class: "qty", text: q2 }) : null),
             el("span", { class: "meta" }, el("span", { text: md(new Date(h.at)) }), h.store ? el("span", { text: h.store }) : null, h.price ? el("span", { text: won(h.price) }) : null)),
           el("button", { class: "again" + (inList ? " is-in" : ""), type: "button", "aria-label": `${h.name} 다시 담기`, onclick: () => reAdd(h) }, inList ? "목록에 있음" : "다시 담기"));
+        // 왼쪽으로 밀면 그 기록을 바로 지운다.
+        const li = el("li", { class: "row", "data-id": h.id },
+          el("div", { class: "swipe-bg", "aria-hidden": "true" }, el("span", { class: "sb-del", html: I.trash + "삭제" })),
+          fg);
+        attachSwipe(li, fg, { left: () => removeHist(h.id) });
+        return li;
       })))));
   }
   function openHistory(){
