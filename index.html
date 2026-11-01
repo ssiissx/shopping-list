@@ -121,11 +121,11 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 .swipe-bg{position:absolute;inset:0;display:flex;align-items:center;padding:0 22px;font-size:.875rem;font-weight:750}
 .swipe-bg span{display:none;align-items:center;gap:6px}
 .swipe-bg svg{width:18px;height:18px}
-.row[data-dir="buy"] .swipe-bg{background:var(--lime-soft);color:var(--lime);justify-content:flex-start}
-.row[data-dir="del"] .swipe-bg{background:var(--red-soft);color:var(--red);justify-content:flex-end}
-.row[data-dir="buy"] .sb-buy,.row[data-dir="del"] .sb-del{display:inline-flex}
-.row[data-dir="buy"].is-armed .swipe-bg{background:var(--lime);color:var(--lime-ink)}
-.row[data-dir="del"].is-armed .swipe-bg{background:var(--red-fill);color:#FFFFFF}
+.row[data-dir="right"] .swipe-bg{background:var(--lime-soft);color:var(--lime);justify-content:flex-start}
+.row[data-dir="left"] .swipe-bg{background:var(--red-soft);color:var(--red);justify-content:flex-end}
+.row[data-dir="right"] .sb-right,.row[data-dir="left"] .sb-left{display:inline-flex}
+.row[data-dir="right"].is-armed .swipe-bg{background:var(--lime);color:var(--lime-ink)}
+.row[data-dir="left"].is-armed .swipe-bg{background:var(--red-fill);color:#FFFFFF}
 .row.is-new .row-fg{animation:flash 1.4s ease-out}
 @keyframes flash{from{background:#2E3A12}to{background:var(--card)}}
 
@@ -185,6 +185,13 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 .btn-del{height:52px;padding:0 18px;border:0;border-radius:15px;background:var(--red-soft);color:var(--red);font-weight:720;display:inline-flex;align-items:center;gap:6px}
 .btn-del svg{width:18px;height:18px}
 @keyframes up{from{transform:translateY(100%)}}
+/* 지우기 전에 묻는 창 */
+.ask-t{margin:6px 2px 6px;font-size:1.25rem;font-weight:780;letter-spacing:-.01em;line-height:1.3;overflow-wrap:anywhere}
+.ask-sub{margin:0 2px 18px;color:var(--soft);font-size:.9375rem}
+.ask-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-cancel{height:52px;border:0;border-radius:15px;background:var(--field);font-weight:720}
+.btn-danger{height:52px;border:0;border-radius:15px;background:var(--red-fill);color:#FFFFFF;font-weight:780;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-danger svg{width:18px;height:18px}
 
 /* 날짜 고르기: 휴대폰 기본 달력은 키보드가 내려가며 칸이 움직이면 바로 닫혀 버려서, 앱 안의 달력을 쓴다 */
 .cal-wrap{position:fixed;inset:0;z-index:25}
@@ -334,6 +341,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     check: svg('<path d="M20 6 9 17l-5-5"/>', 3.2),
     trash: svg('<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'),
     ext: svg('<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'),
+    undo: svg('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>', 2.4),
     history: svg('<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>'),
     plus: svg('<path d="M5 12h14"/><path d="M12 5v14"/>', 2.6),
     minus: svg('<path d="M5 12h14"/>', 2.6),
@@ -527,15 +535,11 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     const i = data.items.findIndex(x => x.id === id);
     if (i < 0) return;
     const it = data.items[i];
-    const h = { id: newId(), name: it.name || "이름 없음", qty: it.qty, unit: it.unit, store: it.store, link: it.link, price: it.price || 0, at: Date.now() };
+    // listDate·addedAt: 잘못 누른 '샀어요'를 기록에서 되돌릴 때 원래 날짜 묶음·순서로 돌려놓으려고 남긴다.
+    const h = { id: newId(), name: it.name || "이름 없음", qty: it.qty, unit: it.unit, store: it.store, link: it.link, price: it.price || 0, at: Date.now(), listDate: it.date || "", addedAt: it.addedAt };
     data.items.splice(i, 1);
     data.history.unshift(h);
     save(); render();
-    toast(`‘${h.name}’ 샀어요`, "되돌리기", () => {
-      data.history = data.history.filter(x => x.id !== h.id);
-      data.items.splice(Math.min(i, data.items.length), 0, it);
-      save(); render();
-    });
   }
   function removeItem(id){
     const i = data.items.findIndex(x => x.id === id);
@@ -551,6 +555,17 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     data.history.splice(i, 1);
     save(); renderHistory();
   }
+  // 기록에서 오른쪽으로 밀기: '샀어요'를 취소하고 목록으로 돌려놓는다.
+  function unbuy(hid){
+    const i = data.history.findIndex(x => x.id === hid);
+    if (i < 0) return;
+    const h = data.history.splice(i, 1)[0];
+    const inList = data.items.some(x => norm(x.name) === norm(h.name));
+    if (!inList) data.items.push({ id: newId(), name: h.name, qty: h.qty || 1, unit: h.unit || "", date: h.listDate || "",
+      store: h.store || "", link: h.link || "", price: h.price || 0, addedAt: h.addedAt || Date.now() });
+    save(); renderHistory();
+    toast(inList ? `‘${h.name}’은 이미 목록에 있어서 기록만 지웠어요` : `‘${h.name}’ 목록으로 되돌렸어요`);
+  }
   function reAdd(h){
     const inList = data.items.find(i => norm(i.name) === norm(h.name));
     if (inList){ toast(`‘${h.name}’은 이미 목록에 있어요`); return; }
@@ -564,7 +579,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
   const hideToast = () => { toastEl.hidden = true; };
   function toast(msg, label, action){
     toastEl.replaceChildren(el("span", { text: msg }),
-      label ? el("button", { class: "toast-act", type: "button", onclick: () => { hideToast(); action(); } }, label) : null);
+      label ? el("button", { class: "toast-act", type: "button", onclick: () => { hideToast(); action(); } }, label) : "");
     toastEl.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, label ? 5000 : 2400);
@@ -665,8 +680,8 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
       it.link ? el("a", { class: "go", href: it.link, target: "_blank", rel: "noopener noreferrer", "aria-label": `${it.name} 링크 열기${it.store ? " (" + it.store + ")" : ""}`, html: I.ext }) : null);
     const li = el("li", { class: "row", "data-id": it.id },
       el("div", { class: "swipe-bg", "aria-hidden": "true" },
-        el("span", { class: "sb-buy", html: I.check + "샀어요" }),
-        el("span", { class: "sb-del", html: I.trash + "삭제" })),
+        el("span", { class: "sb-right", html: I.check + "샀어요" }),
+        el("span", { class: "sb-left", html: I.trash + "삭제" })),
       fg);
     attachSwipe(li, fg, { right: () => buy(it.id), left: () => removeItem(it.id) });
     return li;
@@ -687,7 +702,8 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     setTimeout(() => collapse(li, () => buy(id)), reduceMotion ? 0 : 280);
   }
 
-  // 밀어서 하는 동작. acts.right = 오른쪽으로 밀 때(목록: 샀음), acts.left = 왼쪽으로 밀 때(삭제).
+  // 밀어서 하는 동작. acts.right = 오른쪽으로 밀 때, acts.left = 왼쪽으로 밀 때.
+  // acts.askLeft가 있으면 왼쪽 동작 전에 물어보고, 그동안 줄을 민 채로 둔다(취소하면 제자리로).
   // 동작이 없는 쪽으로는 움직이지 않는다. 세로로 먼저 움직이면 스크롤로 넘긴다.
   function attachSwipe(li, fg, acts){
     let x0 = 0, y0 = 0, dx = 0, pid = null, tracking = false, sliding = false;
@@ -709,9 +725,14 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
       }
       dx = (mx > 0 && !acts.right) || (mx < 0 && !acts.left) ? 0 : mx;
       fg.style.transform = dx ? `translateX(${dx}px)` : "";
-      if (dx) li.dataset.dir = dx > 0 ? "buy" : "del"; else delete li.dataset.dir;
+      if (dx) li.dataset.dir = dx > 0 ? "right" : "left"; else delete li.dataset.dir;
       li.classList.toggle("is-armed", Math.abs(dx) > limit());
     });
+    const snapBack = () => {
+      fg.style.transition = "transform .2s ease";
+      fg.style.transform = "";
+      setTimeout(() => { delete li.dataset.dir; li.classList.remove("is-armed"); }, 200);
+    };
     const end = e => {
       if (!tracking || e.pointerId !== pid) return;
       tracking = false;
@@ -719,17 +740,20 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
       fg._swiped = true;
       setTimeout(() => { fg._swiped = false; }, 400);
       const go = e.type !== "pointercancel" && Math.abs(dx) > limit();
-      if (go){
-        li.dataset.busy = "1";
-        const dir = dx > 0 ? 1 : -1;
+      if (!go){ snapBack(); return; }
+      li.dataset.busy = "1";
+      const dir = dx > 0 ? 1 : -1;
+      const run = dir > 0 ? acts.right : acts.left;
+      const commit = () => {
         fg.style.transition = reduceMotion ? "none" : "transform .18s ease-in";
         fg.style.transform = `translateX(${dir * 110}%)`;
-        setTimeout(() => collapse(li, dir > 0 ? acts.right : acts.left), reduceMotion ? 0 : 170);
-      } else {
-        fg.style.transition = "transform .2s ease";
-        fg.style.transform = "";
-        setTimeout(() => { delete li.dataset.dir; li.classList.remove("is-armed"); }, 200);
-      }
+        setTimeout(() => collapse(li, run), reduceMotion ? 0 : 170);
+      };
+      if (dir > 0 || !acts.askLeft){ commit(); return; }
+      fg.style.transition = "transform .18s ease";
+      fg.style.transform = `translateX(${-limit()}px)`;
+      li.classList.add("is-armed");
+      acts.askLeft(ok => { if (ok) commit(); else { delete li.dataset.busy; snapBack(); } });
     };
     fg.addEventListener("pointerup", end);
     fg.addEventListener("pointercancel", end);
@@ -830,9 +854,10 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
 
   // ---- 고치기 시트 ----
   let sheetClose = null;
-  function openSheet(build, onClose){
+  function openSheet(build, onClose, label){
     const wasOpen = !sheetWrap.hidden;
     if (wasOpen) closeSheet(true);
+    sheet.setAttribute("aria-label", label || "고치기");
     sheet.replaceChildren(el("div", { class: "grab" }), build());
     sheetWrap.hidden = false;
     document.body.classList.add("on-sheet");
@@ -855,6 +880,18 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
     if (!fromPop && history.state && history.state.sheet) history.back();
   }
   $("scrim").addEventListener("click", () => closeSheet());
+
+  // 지우기 전에 한 번 묻는 아래 창. 어떻게 닫히든(취소·바깥 누름·뒤로) 닫힐 때 answer(지움 여부)를 부른다.
+  function askSheet(title, sub, okLabel, answer){
+    let ok = false;
+    openSheet(() => el("div", { class: "col" },
+      el("h2", { class: "ask-t", text: title }),
+      el("p", { class: "ask-sub", text: sub }),
+      el("div", { class: "ask-btns" },
+        el("button", { class: "btn-cancel", type: "button", onclick: () => closeSheet() }, "취소"),
+        el("button", { class: "btn-danger", type: "button", html: I.trash + okLabel, onclick: () => { ok = true; closeSheet(); } }))),
+      () => answer(ok), title);
+  }
 
   const f = (label, ...kids) => el("label", { class: "f" }, el("span", { class: "fl", text: label }), ...kids);
   function priceInput(value, onChange, placeholder){
@@ -1000,7 +1037,7 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
       histList.replaceChildren(el("div", { class: "empty" },
         el("div", { class: "badge", html: q ? I.search : I.history }),
         el("h2", { text: q ? "찾는 기록이 없어요" : "아직 산 게 없어요" }),
-        el("p", { text: q ? "이름이나 가게 이름 일부로 찾아보세요." : "목록에서 산 것을 체크하면 언제·어디서 샀는지 여기 남아요. 지울 땐 왼쪽으로 밀면 돼요." })));
+        el("p", { text: q ? "이름이나 가게 이름 일부로 찾아보세요." : "목록에서 산 것을 체크하면 언제·어디서 샀는지 여기 남아요." })));
       return;
     }
     const have = new Set(data.items.map(i => norm(i.name)));
@@ -1020,11 +1057,15 @@ main.col{padding-top:4px;padding-bottom:calc(var(--composer-h) + 28px)}
             el("span", { class: "nline" }, el("span", { class: "name", text: h.name }), q2 ? el("span", { class: "qty", text: q2 }) : null),
             el("span", { class: "meta" }, el("span", { text: md(new Date(h.at)) }), h.store ? el("span", { text: h.store }) : null, h.price ? el("span", { text: won(h.price) }) : null)),
           el("button", { class: "again" + (inList ? " is-in" : ""), type: "button", "aria-label": `${h.name} 다시 담기`, onclick: () => reAdd(h) }, inList ? "목록에 있음" : "다시 담기"));
-        // 왼쪽으로 밀면 그 기록을 바로 지운다.
+        // 오른쪽으로 밀면 '샀어요' 취소(목록으로), 왼쪽으로 밀면 물어본 뒤 기록 삭제.
         const li = el("li", { class: "row", "data-id": h.id },
-          el("div", { class: "swipe-bg", "aria-hidden": "true" }, el("span", { class: "sb-del", html: I.trash + "삭제" })),
+          el("div", { class: "swipe-bg", "aria-hidden": "true" },
+            el("span", { class: "sb-right", html: I.undo + "되돌리기" }),
+            el("span", { class: "sb-left", html: I.trash + "삭제" })),
           fg);
-        attachSwipe(li, fg, { left: () => removeHist(h.id) });
+        const sub = md(new Date(h.at)) + (h.store ? " · " + h.store : "") + (h.price ? " · " + won(h.price) : "");
+        attachSwipe(li, fg, { right: () => unbuy(h.id), left: () => removeHist(h.id),
+          askLeft: answer => askSheet(`‘${h.name}${q2 ? " " + q2 : ""}’ 기록을 삭제할까요?`, sub, "삭제", answer) });
         return li;
       })))));
   }
